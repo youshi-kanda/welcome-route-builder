@@ -40,8 +40,8 @@ const Admin = () => {
   const [filters, setFilters] = useState({
     startDate: "",
     endDate: "",
-    status: "",
-    templateId: "",
+    status: "all",
+    templateId: "all",
   });
 
   const { data, isLoading, refetch } = useQuery({
@@ -50,7 +50,13 @@ const Admin = () => {
       if (useMockData) {
         return { logs: mockSmsLogs, total: mockSmsLogs.length, hasMore: false };
       }
-      return api.getSmsLogs(filters);
+      // Convert "all" to empty string for API
+      const apiFilters = {
+        ...filters,
+        status: filters.status === "all" ? "" : filters.status,
+        templateId: filters.templateId === "all" ? "" : filters.templateId,
+      };
+      return api.getSmsLogs(apiFilters);
     },
   });
 
@@ -72,8 +78,8 @@ const Admin = () => {
     setFilters({
       startDate: "",
       endDate: "",
-      status: "",
-      templateId: "",
+      status: "all",
+      templateId: "all",
     });
   };
 
@@ -166,7 +172,7 @@ const Admin = () => {
                     <SelectValue placeholder={ja.admin.allStatuses} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">
+                    <SelectItem value="all">
                       {ja.admin.allStatuses}
                     </SelectItem>
                     <SelectItem value="queued">
@@ -199,7 +205,7 @@ const Admin = () => {
                     <SelectValue placeholder={ja.admin.allTemplates} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">
+                    <SelectItem value="all">
                       {ja.admin.allTemplates}
                     </SelectItem>
                     <SelectItem value="receipt">{ja.templates.receipt}</SelectItem>
