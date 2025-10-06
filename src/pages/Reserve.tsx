@@ -24,8 +24,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ja } from "@/i18n/ja";
-import { reservationSchema, type ReservationFormData, getUserData } from "@/lib/validation";
-import { api } from "@/lib/api";
+import { reservationSchema, type ReservationFormData, getUserData, getApplicantId } from "@/lib/validation";
+import { api, handleApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const timeSlots = [
@@ -65,27 +65,49 @@ const Reserve = () => {
 
     try {
       const userData = getUserData();
-      const dateTime = `${format(data.date, "yyyy/MM/dd", { locale: jaLocale })} ${data.time}`;
-
-      // Send confirmation SMS
+      const applicantId = getApplicantId();
+      
+      if (!userData?.phone || !applicantId) {
+        toast.error('ユーザー情報が見つかりません。最初からやり直してください。');
+        window.location.href = '/';
+        return;
+      }
+      
+      const selectedDateTime = new Date(data.date);
+      const [hours, minutes] = data.time.split(':').map(Number);
+      selectedDateTime.setHours(hours, minutes, 0, 0);
+      
+      // 既存UIでの選択をシミュレーションし、確定SMS送信
+      // 実際のシステムでは「指定送付」でシンプルに操作
       await api.sendSms({
-        to: userData?.phone || "+81 90 0000 0000",
-        templateId: "reserve",
+        to: userData.phone,
+        templateId: "2nd_confirmed",
         variables: {
-          NAME: userData?.name || "応募者様",
-          URL: window.location.origin,
+          NAME: userData.name || "応募者様",
+          DATE_JP: format(selectedDateTime, "yyyy年MM月dd日(E)", { locale: jaLocale }),
+          START: format(selectedDateTime, "HH:mm"),
+          END: format(new Date(selectedDateTime.getTime() + 60*60*1000), "HH:mm"),
+          PLACE_URL: "ALSOK本社 3F会議室"
         },
+        applicant_id: applicantId
       });
 
-      // If reminder is enabled, send reminder SMS
+      // リマインダーSMS（オプション）
       if (data.reminder) {
+        // 明日のリマインダーをシミュレーション
+        const reminderDate = new Date(selectedDateTime);
+        reminderDate.setDate(reminderDate.getDate() - 1);
+        
         await api.sendSms({
-          to: userData?.phone || "+81 90 0000 0000",
-          templateId: "remind",
+          to: userData.phone,
+          templateId: "reminder",
           variables: {
-            DATETIME: dateTime,
-            URL: window.location.origin,
+            NAME: userData.name || "応募者様",
+            DATE_JP: format(selectedDateTime, "yyyy/MM/dd", { locale: jaLocale }),
+            TIME: format(selectedDateTime, "HH:mm"),
+            PLACE_URL: "ALSOK本社 3F会議室"
           },
+          applicant_id: applicantId
         });
       }
 
@@ -97,8 +119,9 @@ const Reserve = () => {
       });
     } catch (error) {
       console.error("Reservation error:", error);
+      const errorMessage = handleApiError(error);
       toast.error(ja.common.error, {
-        description: error instanceof Error ? error.message : undefined,
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);

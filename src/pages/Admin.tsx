@@ -26,7 +26,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ja } from "@/i18n/ja";
-import { api, mockSmsLogs, type SmsLog } from "@/lib/api";
+import { api, mockSmsLogs, handleApiError, type SmsLog } from "@/lib/api";
 
 const statusColors = {
   queued: "bg-warning text-warning-foreground",
@@ -62,15 +62,20 @@ const Admin = () => {
 
   const handleResend = async (log: SmsLog) => {
     try {
+      // ALSOK API仕様にSMS再送信
       await api.sendSms({
-        to: log.to,
-        templateId: log.templateId as "receipt" | "reserve" | "remind",
-        variables: {},
+        to: log.to || '',
+        body: log.content, // 元のメッセージをそのまま送信
+        applicant_id: log.applicant_id
       });
       toast.success(ja.admin.resendSuccess);
       refetch();
     } catch (error) {
-      toast.error(ja.admin.resendError);
+      console.error('Resend error:', error);
+      const errorMessage = handleApiError(error);
+      toast.error(ja.admin.resendError, {
+        description: errorMessage
+      });
     }
   };
 
@@ -261,16 +266,18 @@ const Admin = () => {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {
+                            {log.templateId ? (
                               ja.templates[
                                 log.templateId as keyof typeof ja.templates
-                              ]
-                            }
+                              ] || log.templateId
+                            ) : (
+                              log.channel === 'sms' ? 'SMS' : log.channel
+                            )}
                           </Badge>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
                           <span className="text-sm text-muted-foreground">
-                            {truncateText(log.body)}
+                            {truncateText(log.content)}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -288,16 +295,16 @@ const Admin = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {formatDate(log.timestamp)}
+                          {formatDate(log.at)}
                         </TableCell>
                         <TableCell className="text-right">
-                          {log.status === "failed" && (
+                          {(log.status === "failed" || (log.direction === 'out' && log.channel === 'sms')) && (
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleResend(log)}
                             >
-                              {ja.admin.resendButton}
+                              {log.status === "failed" ? ja.admin.resendButton : '再送信'}
                             </Button>
                           )}
                         </TableCell>

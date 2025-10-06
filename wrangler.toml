@@ -1,0 +1,18 @@
+# Cloudflare Pages 設定
+name = "alsok-interview-frontend"
+compatibility_date = "2023-12-01"
+
+# Pages 固有設定（オプション）
+[site]
+bucket = "dist"
+
+# 環境変数（本番では Pages ダッシュボードで設定）
+[vars]
+VITE_DEFAULT_TZ = "Asia/Tokyo"
+VITE_APP_NAME = "ALSOK採用システム"
+VITE_APP_VERSION = "1.0.0"
+
+# カスタムドメイン設定例
+# [[routes]]
+# pattern = "alsok-interview.com/*"
+# zone_name = "alsok-interview.com"

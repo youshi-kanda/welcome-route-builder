@@ -8,8 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ja } from "@/i18n/ja";
-import { api } from "@/lib/api";
-import { getUserData } from "@/lib/validation";
+import { api, handleApiError } from "@/lib/api";
+import { getUserData, getApplicantId } from "@/lib/validation";
 
 interface Question {
   id: number;
@@ -114,27 +114,38 @@ const Chat = () => {
 
     try {
       const userData = getUserData();
-      const reserveUrl = `${window.location.origin}/reserve`;
+      const applicantId = getApplicantId();
+      
+      if (!userData?.phone || !applicantId) {
+        toast.error('ユーザー情報が見つかりません。最初からやり直してください。');
+        navigate('/');
+        return;
+      }
 
+      // 質問完了SMS送信（ALSOK API仕様）
       await api.sendSms({
-        to: userData?.phone || "+81 90 0000 0000",
-        templateId: "reserve",
+        to: userData.phone,
+        templateId: "chat_completed",
         variables: {
-          NAME: userData?.name || "応募者様",
-          URL: reserveUrl,
+          NAME: userData.name || "応募者様"
         },
+        applicant_id: applicantId
       });
 
       toast.success(ja.chat.successTitle, {
         description: ja.chat.successMessage,
       });
 
+      // 予約画面へ遷移
       setTimeout(() => {
         navigate("/reserve");
       }, 2000);
     } catch (error) {
-      console.error("SMS send error:", error);
-      toast.error(ja.chat.errorMessage);
+      console.error("Chat completion error:", error);
+      const errorMessage = handleApiError(error);
+      toast.error(ja.chat.errorMessage, {
+        description: errorMessage
+      });
     } finally {
       setIsSubmitting(false);
     }

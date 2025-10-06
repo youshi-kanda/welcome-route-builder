@@ -37,23 +37,52 @@ export function formatPhoneNumber(phone: string): string {
   return cleaned;
 }
 
-// Store user data in localStorage
+// ALSOK 面接システム - Store user data in localStorage
 const STORAGE_KEY = "alsok_user_data";
+const APPLICANT_ID_KEY = "alsok_applicant_id";
 
-export function saveUserData(data: { phone: string; name?: string }) {
+export function saveUserData(data: { phone: string; name?: string; applicant_id?: string }) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    if (data.applicant_id) {
+      localStorage.setItem(APPLICANT_ID_KEY, data.applicant_id);
+    }
   } catch (error) {
     console.error("Failed to save user data:", error);
   }
 }
 
-export function getUserData(): { phone: string; name?: string } | null {
+export function getUserData(): { phone: string; name?: string; applicant_id?: string } | null {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : null;
+    const applicant_id = localStorage.getItem(APPLICANT_ID_KEY);
+    const userData = data ? JSON.parse(data) : null;
+    
+    if (userData && applicant_id) {
+      userData.applicant_id = applicant_id;
+    }
+    
+    return userData;
   } catch (error) {
     console.error("Failed to get user data:", error);
     return null;
+  }
+}
+
+export function getApplicantId(): string | null {
+  try {
+    return localStorage.getItem(APPLICANT_ID_KEY);
+  } catch (error) {
+    console.error("Failed to get applicant ID:", error);
+    return null;
+  }
+}
+
+export function clearUserData(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(APPLICANT_ID_KEY);
+  } catch (error) {
+    console.error("Failed to clear user data:", error);
   }
 }
