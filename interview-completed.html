@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ALSOK採用面接 - 完了</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .success-icon {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        .slide-up {
+            animation: slideUp 0.6s ease-out;
+        }
+        
+        .bounce-in {
+            animation: bounceIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .confetti {
+            animation: confetti 1s ease-in-out;
+        }
+        
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+        
+        .info-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .next-step {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #f59e0b;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    
+    <div class="w-full max-w-md">
+        
+        <!-- メイン完了カード -->
+        <div class="bg-white rounded-3xl card-shadow p-8 fade-in text-center">
+            
+            <!-- 成功アイコン -->
+            <div class="bounce-in mb-6">
+                <div class="success-icon w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-3xl text-white">✅</span>
+                </div>
+                <div class="confetti text-2xl mb-2">🎉</div>
+            </div>
+            
+            <!-- メインメッセージ -->
+            <div class="slide-up mb-8">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">
+                    面接完了！
+                </h1>
+                <p class="text-gray-600 text-lg mb-4">
+                    お疲れ様でした
+                </p>
+                <p class="text-gray-500 leading-relaxed">
+                    <span id="applicant-name">---</span>さん、<br>
+                    ALSOK採用面接にご参加いただき、<br>
+                    ありがとうございました。
+                </p>
+            </div>
+            
+            <!-- 応募者情報カード -->
+            <div class="info-card rounded-xl p-4 mb-6 text-left slide-up" style="animation-delay: 0.2s">
+                <h3 class="font-semibold text-gray-800 mb-3 text-center">📋 面接情報</h3>
+                <div class="space-y-2 text-sm text-gray-700">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">応募者ID:</span>
+                        <span id="applicant-id" class="font-mono">---</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">面接完了時刻:</span>
+                        <span id="completion-time">---</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">回答数:</span>
+                        <span><span id="response-count">0</span>/5 問</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">面接時間:</span>
+                        <span id="interview-duration">約 -- 分</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 次のステップ案内 -->
+            <div class="next-step rounded-xl p-4 mb-8 text-left slide-up" style="animation-delay: 0.4s">
+                <h3 class="font-semibold text-gray-800 mb-3 text-center">📮 今後の流れ</h3>
+                <div class="space-y-3 text-sm text-gray-700">
+                    <div class="flex items-start space-x-3">
+                        <span class="text-lg">1️⃣</span>
+                        <div>
+                            <div class="font-medium">書類審査</div>
+                            <div class="text-gray-600">面接内容を基に選考を行います</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <span class="text-lg">2️⃣</span>
+                        <div>
+                            <div class="font-medium">結果通知</div>
+                            <div class="text-gray-600">1週間以内にお電話でご連絡</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <span class="text-lg">3️⃣</span>
+                        <div>
+                            <div class="font-medium">最終面接</div>
+                            <div class="text-gray-600">合格者のみ対面面接を実施</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 連絡先確認 -->
+            <div class="bg-blue-50 rounded-xl p-4 mb-6 text-left slide-up" style="animation-delay: 0.6s">
+                <h3 class="font-semibold text-gray-800 mb-2 text-center">📞 重要なお知らせ</h3>
+                <div class="text-sm text-gray-700 space-y-2">
+                    <div class="flex items-center space-x-2">
+                        <span>📱</span>
+                        <div>
+                            <span class="font-medium">連絡先:</span>
+                            <span id="contact-phone">---</span>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-600 mt-2">
+                        ⚠️ 上記番号に1週間以内にご連絡いたします。<br>
+                        電話に出られない場合は、後ほど改めてお電話いたします。
+                    </div>
+                </div>
+            </div>
+            
+            <!-- アクションボタン -->
+            <div class="space-y-3 slide-up" style="animation-delay: 0.8s">
+                
+                <!-- 面接内容確認 -->
+                <button 
+                    id="review-answers"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-medium transition-colors"
+                >
+                    📝 回答内容を確認する
+                </button>
+                
+                <!-- 問い合わせ -->
+                <button 
+                    id="contact-info"
+                    class="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-xl font-medium transition-colors"
+                >
+                    📞 お問い合わせ先
+                </button>
+                
+                <!-- デモ体験用（デモ時のみ表示） -->
+                <button 
+                    id="demo-restart"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-medium transition-colors"
+                >
+                    🔄 デモをもう一度体験する
+                </button>
+            </div>
+            
+            <!-- フッター -->
+            <div class="mt-8 pt-6 border-t border-gray-200 text-center slide-up" style="animation-delay: 1s">
+                <div class="text-xs text-gray-500 space-y-1">
+                    <div>🛡️ ALSOK採用システム</div>
+                    <div>本日はありがとうございました</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- モーダル: 回答内容確認 -->
+    <div id="answer-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden">
+            <div class="p-6 border-b">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold">📝 面接回答内容</h3>
+                    <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="answer-content" class="p-6 overflow-y-auto max-h-96">
+                <!-- 動的に生成されます -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- モーダル: お問い合わせ -->
+    <div id="contact-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-sm w-full">
+            <div class="p-6">
+                <div class="text-center">
+                    <div class="text-3xl mb-4">📞</div>
+                    <h3 class="text-lg font-semibold mb-4">お問い合わせ先</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium">ALSOK採用担当</div>
+                            <div class="text-gray-600 mt-1">03-1234-5678</div>
+                            <div class="text-xs text-gray-500 mt-1">平日 9:00-18:00</div>
+                        </div>
+                        <div class="text-xs text-gray-600">
+                            面接に関するご質問やご不明な点がございましたら、<br>
+                            上記までお気軽にお電話ください。
+                        </div>
+                    </div>
+                    <button id="close-contact-modal" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg">
+                        閉じる
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 共有ストレージライブラリ -->
+    <script src="shared-storage.js"></script>
+    
+    <script>
+        let applicantId = null;
+        let applicantData = null;
+        
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+        });
+        
+        // ページ初期化
+        function initializePage() {
+            // URLパラメータから応募者ID取得
+            const urlParams = new URLSearchParams(window.location.search);
+            applicantId = urlParams.get('id');
+            
+            if (!applicantId) {
+                alert('エラー: 応募者IDが見つかりません');
+                window.location.href = '/mobile';
+                return;
+            }
+            
+            // 応募者データ取得
+            applicantData = window.alsokStorage.getApplicant(applicantId);
+            if (!applicantData) {
+                alert('エラー: 応募者情報が見つかりません');
+                window.location.href = '/mobile';
+                return;
+            }
+            
+            // データ表示
+            displayApplicantInfo();
+            
+            // イベントリスナー設定
+            setupEventListeners();
+        }
+        
+        // 応募者情報表示
+        function displayApplicantInfo() {
+            // 基本情報
+            document.getElementById('applicant-name').textContent = applicantData.name;
+            document.getElementById('applicant-id').textContent = applicantData.id;
+            document.getElementById('contact-phone').textContent = applicantData.phone;
+            
+            // 完了時刻
+            const completionTime = new Date(applicantData.interviewCompletedAt || Date.now());
+            document.getElementById('completion-time').textContent = 
+                completionTime.toLocaleString('ja-JP', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            
+            // 回答数
+            const responseCount = applicantData.responses ? applicantData.responses.length : 0;
+            document.getElementById('response-count').textContent = responseCount;
+            
+            // 面接時間計算
+            if (applicantData.interviewStartedAt && applicantData.interviewCompletedAt) {
+                const startTime = new Date(applicantData.interviewStartedAt);
+                const endTime = new Date(applicantData.interviewCompletedAt);
+                const durationMinutes = Math.ceil((endTime - startTime) / (1000 * 60));
+                document.getElementById('interview-duration').textContent = `約 ${durationMinutes} 分`;
+            }
+        }
+        
+        // イベントリスナー設定
+        function setupEventListeners() {
+            // 回答内容確認
+            document.getElementById('review-answers').addEventListener('click', showAnswerModal);
+            
+            // お問い合わせ
+            document.getElementById('contact-info').addEventListener('click', showContactModal);
+            
+            // デモ再開
+            document.getElementById('demo-restart').addEventListener('click', restartDemo);
+            
+            // モーダル閉じる
+            document.getElementById('close-modal').addEventListener('click', closeAnswerModal);
+            document.getElementById('close-contact-modal').addEventListener('click', closeContactModal);
+            document.getElementById('answer-modal').addEventListener('click', function(e) {
+                if (e.target === this) closeAnswerModal();
+            });
+            document.getElementById('contact-modal').addEventListener('click', function(e) {
+                if (e.target === this) closeContactModal();
+            });
+        }
+        
+        // 回答モーダル表示
+        function showAnswerModal() {
+            const modal = document.getElementById('answer-modal');
+            const content = document.getElementById('answer-content');
+            
+            if (!applicantData.responses || applicantData.responses.length === 0) {
+                content.innerHTML = '<div class="text-center text-gray-500">回答データが見つかりません</div>';
+            } else {
+                content.innerHTML = applicantData.responses.map((response, index) => `
+                    <div class="mb-6 pb-4 ${index < applicantData.responses.length - 1 ? 'border-b border-gray-200' : ''}">
+                        <div class="font-medium text-gray-800 mb-2">
+                            質問 ${response.questionNumber}: ${response.question}
+                        </div>
+                        <div class="bg-blue-50 rounded-lg p-3 text-gray-700">
+                            ${response.answer.replace(/\n/g, '<br>')}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-2">
+                            回答時刻: ${new Date(response.timestamp).toLocaleString('ja-JP')}
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            modal.classList.remove('hidden');
+        }
+        
+        // 回答モーダル閉じる
+        function closeAnswerModal() {
+            document.getElementById('answer-modal').classList.add('hidden');
+        }
+        
+        // お問い合わせモーダル表示
+        function showContactModal() {
+            document.getElementById('contact-modal').classList.remove('hidden');
+        }
+        
+        // お問い合わせモーダル閉じる
+        function closeContactModal() {
+            document.getElementById('contact-modal').classList.add('hidden');
+        }
+        
+        // デモ再開
+        function restartDemo() {
+            if (confirm('新しい応募者として最初から体験しますか？')) {
+                // 現在の応募者のステータスを完了にマーク（既に完了済み）
+                window.location.href = '/mobile';
+            }
+        }
+        
+        // キーボードイベント
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAnswerModal();
+                closeContactModal();
+            }
+        });
+        
+        // 紙吹雪エフェクト（おまけ）
+        function createConfetti() {
+            const colors = ['🎉', '🎊', '✨', '🎈', '🎁'];
+            const container = document.body;
+            
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.textContent = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.className = 'confetti fixed text-2xl pointer-events-none z-40';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.top = '100vh';
+                    
+                    container.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        container.removeChild(confetti);
+                    }, 1000);
+                }, i * 100);
+            }
+        }
+        
+        // ページ読み込み後に紙吹雪
+        setTimeout(createConfetti, 1000);
+    </script>
+</body>
+</html>

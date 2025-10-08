@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ALSOK採用面接 - ご応募フォーム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .input-field {
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* モバイル最適化 */
+        @media (max-width: 640px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    
+    <div class="w-full max-w-md">
+        <!-- メイン応募フォーム -->
+        <div id="application-form" class="bg-white rounded-2xl card-shadow p-8 fade-in-up">
+            
+            <!-- ヘッダー -->
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-2xl">🛡️</span>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">ALSOK採用面接</h1>
+                <p class="text-gray-600">ご応募いただきありがとうございます</p>
+                <div class="w-12 h-1 bg-blue-500 rounded mx-auto mt-3"></div>
+            </div>
+            
+            <!-- フォーム -->
+            <form id="applicant-form" class="space-y-6">
+                
+                <!-- 名前入力 -->
+                <div>
+                    <label for="applicant-name" class="block text-sm font-semibold text-gray-700 mb-2">
+                        お名前 <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="applicant-name" 
+                        name="name"
+                        class="input-field w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none"
+                        placeholder="例: 山田太郎"
+                        required
+                        autocomplete="name"
+                    >
+                    <p id="name-error" class="text-red-500 text-sm mt-1 hidden">お名前を入力してください</p>
+                </div>
+                
+                <!-- 電話番号入力 -->
+                <div>
+                    <label for="applicant-phone" class="block text-sm font-semibold text-gray-700 mb-2">
+                        電話番号 <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        type="tel" 
+                        id="applicant-phone" 
+                        name="phone"
+                        class="input-field w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none"
+                        placeholder="例: 090-1234-5678"
+                        required
+                        autocomplete="tel"
+                    >
+                    <p id="phone-error" class="text-red-500 text-sm mt-1 hidden">正しい電話番号を入力してください</p>
+                    <p class="text-gray-500 text-xs mt-1">
+                        面接結果のご連絡にお使いします
+                    </p>
+                </div>
+                
+                <!-- 応募動機（オプション） -->
+                <div>
+                    <label for="motivation" class="block text-sm font-semibold text-gray-700 mb-2">
+                        志望動機（簡潔に）
+                        <span class="text-gray-400 text-xs font-normal">任意</span>
+                    </label>
+                    <textarea 
+                        id="motivation" 
+                        name="motivation"
+                        class="input-field w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none resize-none"
+                        rows="3"
+                        placeholder="ALSOKで働きたい理由をお聞かせください（任意）"
+                    ></textarea>
+                </div>
+                
+                <!-- プライバシー同意 -->
+                <div class="bg-gray-50 rounded-xl p-4">
+                    <label class="flex items-start space-x-3 cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            id="privacy-consent" 
+                            required
+                            class="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        >
+                        <div class="text-sm text-gray-700">
+                            <span class="font-medium">個人情報の取り扱いに同意します</span>
+                            <div class="text-xs text-gray-500 mt-1">
+                                お預かりした個人情報は、採用選考および連絡のためのみに使用し、
+                                適切に管理いたします。
+                            </div>
+                        </div>
+                    </label>
+                    <p id="consent-error" class="text-red-500 text-sm mt-2 hidden">個人情報の取り扱いに同意してください</p>
+                </div>
+                
+                <!-- 送信ボタン -->
+                <button 
+                    type="submit" 
+                    id="submit-btn"
+                    class="btn-primary w-full py-4 text-white font-bold rounded-xl shadow-lg"
+                >
+                    <span id="submit-text">面接を開始する</span>
+                    <span id="submit-loading" class="hidden">
+                        <svg class="loading-spinner inline w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="12" r="2"/>
+                            <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        処理中...
+                    </span>
+                </button>
+            </form>
+            
+            <!-- 面接について -->
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-800 mb-3">面接について</h3>
+                <div class="space-y-2 text-xs text-gray-600">
+                    <div class="flex items-center space-x-2">
+                        <span>⏱️</span>
+                        <span>所要時間: 約5〜10分</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span>🤖</span>
+                        <span>AI面接官による5つの質問</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span>📱</span>
+                        <span>スマートフォンで簡単回答</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span>✅</span>
+                        <span>結果は後日ご連絡</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 登録完了メッセージ -->
+        <div id="registration-success" class="hidden bg-white rounded-2xl card-shadow p-8 fade-in-up text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-2xl">✅</span>
+            </div>
+            <h2 class="text-xl font-bold text-gray-800 mb-2">登録完了！</h2>
+            <p class="text-gray-600 mb-6">
+                応募者情報を登録いたしました。<br>
+                これからAI面接を開始します。
+            </p>
+            
+            <div class="bg-blue-50 rounded-xl p-4 mb-6">
+                <div class="text-sm text-blue-800">
+                    <div class="font-medium">応募者ID</div>
+                    <div id="applicant-id" class="font-mono text-lg mt-1">---</div>
+                </div>
+            </div>
+            
+            <button 
+                id="start-interview-btn"
+                class="btn-primary w-full py-3 text-white font-bold rounded-xl"
+            >
+                🤖 AI面接を開始する
+            </button>
+        </div>
+    </div>
+
+    <!-- 共有ストレージライブラリ -->
+    <script src="shared-storage.js"></script>
+    
+    <script>
+        // フォーム要素
+        const form = document.getElementById('applicant-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const submitText = document.getElementById('submit-text');
+        const submitLoading = document.getElementById('submit-loading');
+        
+        // エラー要素
+        const nameError = document.getElementById('name-error');
+        const phoneError = document.getElementById('phone-error');
+        const consentError = document.getElementById('consent-error');
+        
+        // 画面要素
+        const applicationForm = document.getElementById('application-form');
+        const registrationSuccess = document.getElementById('registration-success');
+        
+        let applicantId = null;
+        
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+        });
+        
+        // ページ初期化
+        function initializePage() {
+            // フォーム送信イベント
+            form.addEventListener('submit', handleFormSubmit);
+            
+            // 入力フィールドのリアルタイムバリデーション
+            document.getElementById('applicant-name').addEventListener('input', clearError);
+            document.getElementById('applicant-phone').addEventListener('input', clearError);
+            document.getElementById('privacy-consent').addEventListener('change', clearError);
+            
+            // 面接開始ボタン
+            document.getElementById('start-interview-btn').addEventListener('click', startInterview);
+            
+            // 初期フォーカス
+            setTimeout(() => {
+                document.getElementById('applicant-name').focus();
+            }, 500);
+        }
+        
+        // フォーム送信処理
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            if (!validateForm()) {
+                return;
+            }
+            
+            const formData = new FormData(form);
+            const applicantInfo = {
+                name: formData.get('name').trim(),
+                phone: formData.get('phone').trim(),
+                motivation: formData.get('motivation').trim() || ''
+            };
+            
+            // ローディング状態
+            setLoading(true);
+            
+            try {
+                // 応募者登録
+                applicantId = window.alsokStorage.addApplicant(applicantInfo);
+                
+                // 少し遅延してから成功画面表示
+                setTimeout(() => {
+                    showRegistrationSuccess(applicantId);
+                    setLoading(false);
+                }, 1500);
+                
+            } catch (error) {
+                console.error('登録エラー:', error);
+                alert('登録中にエラーが発生しました。もう一度お試しください。');
+                setLoading(false);
+            }
+        }
+        
+        // フォームバリデーション
+        function validateForm() {
+            let isValid = true;
+            
+            // 名前チェック
+            const name = document.getElementById('applicant-name').value.trim();
+            if (!name) {
+                showError('name-error', 'お名前を入力してください');
+                isValid = false;
+            } else if (name.length < 2) {
+                showError('name-error', '正しいお名前を入力してください');
+                isValid = false;
+            }
+            
+            // 電話番号チェック
+            const phone = document.getElementById('applicant-phone').value.trim();
+            const phonePattern = /^[0-9-+()\\s]+$/;
+            if (!phone) {
+                showError('phone-error', '電話番号を入力してください');
+                isValid = false;
+            } else if (!phonePattern.test(phone) || phone.length < 10) {
+                showError('phone-error', '正しい電話番号を入力してください');
+                isValid = false;
+            }
+            
+            // 同意チェック
+            const consent = document.getElementById('privacy-consent').checked;
+            if (!consent) {
+                showError('consent-error', '個人情報の取り扱いに同意してください');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        // エラー表示
+        function showError(errorId, message) {
+            const errorElement = document.getElementById(errorId);
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+            
+            // 該当フィールドにフォーカス
+            const fieldName = errorId.replace('-error', '');
+            const field = document.getElementById(fieldName === 'applicant' ? 'applicant-name' : 
+                                               fieldName === 'phone' ? 'applicant-phone' : 
+                                               'privacy-consent');
+            if (field && field.focus) {
+                field.focus();
+            }
+        }
+        
+        // エラークリア
+        function clearError(event) {
+            const fieldId = event.target.id;
+            let errorId = '';
+            
+            if (fieldId === 'applicant-name') {
+                errorId = 'name-error';
+            } else if (fieldId === 'applicant-phone') {
+                errorId = 'phone-error';
+            } else if (fieldId === 'privacy-consent') {
+                errorId = 'consent-error';
+            }
+            
+            if (errorId) {
+                document.getElementById(errorId).classList.add('hidden');
+            }
+        }
+        
+        // ローディング状態管理
+        function setLoading(isLoading) {
+            if (isLoading) {
+                submitText.classList.add('hidden');
+                submitLoading.classList.remove('hidden');
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            } else {
+                submitText.classList.remove('hidden');
+                submitLoading.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+        }
+        
+        // 登録成功画面表示
+        function showRegistrationSuccess(id) {
+            document.getElementById('applicant-id').textContent = id;
+            applicationForm.classList.add('hidden');
+            registrationSuccess.classList.remove('hidden');
+            
+            // 3秒後に自動で面接開始
+            setTimeout(() => {
+                startInterview();
+            }, 3000);
+        }
+        
+        // 面接開始
+        function startInterview() {
+            if (!applicantId) {
+                alert('エラー: 応募者IDが見つかりません');
+                return;
+            }
+            
+            // 面接画面へリダイレクト
+            window.location.href = `/interview?id=${applicantId}`;
+        }
+        
+        // ページ離脱時の確認（フォーム入力中の場合）
+        let hasUnsavedChanges = false;
+        
+        form.addEventListener('input', () => {
+            hasUnsavedChanges = true;
+        });
+        
+        form.addEventListener('submit', () => {
+            hasUnsavedChanges = false;
+        });
+        
+        window.addEventListener('beforeunload', (event) => {
+            if (hasUnsavedChanges && !applicantId) {
+                event.preventDefault();
+                event.returnValue = '';
+                return '';
+            }
+        });
+    </script>
+</body>
+</html>
