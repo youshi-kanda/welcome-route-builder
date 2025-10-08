@@ -84,11 +84,17 @@ class AlsokDemoStorage {
     
     // 応募者追加（警備業対応版）
     addApplicant(applicantInfo) {
+        // 必須フィールドの検証
+        if (!applicantInfo || !applicantInfo.name || !applicantInfo.phone) {
+            console.error('必須情報が不足しています:', applicantInfo);
+            return null;
+        }
+        
         const data = this.getData();
         const applicant = {
             id: applicantInfo.id || this.generateId(),
-            name: applicantInfo.name,
-            phone: applicantInfo.phone,
+            name: applicantInfo.name.trim(),
+            phone: applicantInfo.phone.trim(),
             motivation: applicantInfo.motivation || '',
             
             // 警備業特化項目
@@ -178,6 +184,12 @@ class AlsokDemoStorage {
         
         if (!applicant) {
             console.error('応募者が見つかりません:', applicantId);
+            return false;
+        }
+        
+        // 応募者データの安全性チェック
+        if (!applicant.name) {
+            console.error('応募者データに名前がありません:', applicant);
             return false;
         }
         
@@ -286,6 +298,13 @@ class AlsokDemoStorage {
         const applicant = data.applicants.find(a => a.id === applicantId);
         
         if (!applicant) {
+            console.error('応募者が見つかりません:', applicantId);
+            return false;
+        }
+        
+        // 応募者データの安全性チェック
+        if (!applicant.name) {
+            console.error('応募者データに名前がありません:', applicant);
             return false;
         }
         
@@ -320,6 +339,13 @@ class AlsokDemoStorage {
         const applicant = data.applicants.find(a => a.id === applicantId);
         
         if (!applicant) {
+            console.error('応募者が見つかりません:', applicantId);
+            return false;
+        }
+        
+        // 応募者データの安全性チェック
+        if (!applicant.name) {
+            console.error('応募者データに名前がありません:', applicant);
             return false;
         }
         
@@ -344,6 +370,13 @@ class AlsokDemoStorage {
         const applicant = data.applicants.find(a => a.id === applicantId);
         
         if (!applicant) {
+            console.error('応募者が見つかりません:', applicantId);
+            return false;
+        }
+        
+        // 応募者データの安全性チェック
+        if (!applicant.name) {
+            console.error('応募者データに名前がありません:', applicant);
             return false;
         }
         

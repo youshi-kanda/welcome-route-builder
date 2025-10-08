@@ -321,7 +321,16 @@
             // 応募者データ取得
             applicantData = window.alsokStorage.getApplicant(applicantId);
             if (!applicantData) {
+                console.error('応募者が見つかりません:', applicantId);
                 alert('エラー: 応募者情報が見つかりません');
+                window.location.href = '/mobile';
+                return;
+            }
+            
+            // 応募者データの完全性チェック
+            if (!applicantData.name) {
+                console.error('応募者データが不完全です:', applicantData);
+                alert('エラー: 応募者データが不完全です');
                 window.location.href = '/mobile';
                 return;
             }

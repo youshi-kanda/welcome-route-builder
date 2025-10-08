@@ -294,6 +294,10 @@
                 // 応募者登録
                 applicantId = window.alsokStorage.addApplicant(applicantInfo);
                 
+                if (!applicantId) {
+                    throw new Error('応募者登録に失敗しました。必須項目を確認してください。');
+                }
+                
                 // 少し遅延してから成功画面表示
                 setTimeout(() => {
                     showRegistrationSuccess(applicantId);
