@@ -5,14 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "demo": "vite --mode demo",
     "build": "vite build",
-    "build:dev": "vite build --mode development",
-    "build:demo": "vite build --mode demo",
     "lint": "eslint .",
     "preview": "vite preview",
     "pages:deploy": "npm run build && wrangler pages publish dist",
-    "pages:demo:deploy": "npm run build:demo && wrangler pages publish dist --config wrangler-demo.toml",
     "pages:dev": "wrangler pages dev dist"
   },
   "dependencies": {

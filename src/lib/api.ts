@@ -323,50 +323,6 @@ export const mockSmsResponse = async (data: SendSmsRequest): Promise<SendSmsResp
   
   const smsContent = generateSmsContent(data);
   
-  // デモ用SMS内容を画面に通知
-  if (typeof window !== 'undefined') {
-    const timestamp = new Date().toLocaleString('ja-JP');
-    const smsEvent = new CustomEvent('demo-sms-sent', { 
-      detail: {
-        to: data.to,
-        content: smsContent,
-        timestamp,
-        status: 'delivered'
-      }
-    });
-    window.dispatchEvent(smsEvent);
-
-    // デモストレージに保存
-    const { default: DemoStorage } = await import('./demo-storage');
-    DemoStorage.saveMessage({
-      id: `msg_${generateId()}`,
-      applicant_id: data.applicant_id || `phone:${data.to}`,
-      at: new Date().toISOString(),
-      direction: 'out',
-      content: smsContent,
-      channel: 'sms',
-      status: 'delivered'
-    });
-
-    // メール通知送信
-    try {
-      const { default: EmailService } = await import('./emailService');
-      const emailService = EmailService.getInstance();
-      
-      await emailService.sendSmsNotification({
-        to: data.to,
-        smsContent,
-        phoneNumber: data.to,
-        timestamp,
-        templateType: data.templateId || 'unknown',
-        applicantId: data.applicant_id,
-        demoUrl: window.location.origin
-      });
-    } catch (emailError) {
-      console.warn('Email notification failed:', emailError);
-    }
-  }
-  
   return {
     ok: true,
     sid: `DEMO${generateId()}`,
@@ -405,18 +361,6 @@ export const mockApplicationResponse = async (data: ApplicationRequest): Promise
   
   const applicantId = `DEMO_${Date.now().toString(36).toUpperCase()}`;
   
-  // デモストレージに保存
-  if (typeof window !== 'undefined') {
-    const { default: DemoStorage } = await import('./demo-storage');
-    DemoStorage.saveApplicant({
-      applicant_id: applicantId,
-      name: data.name || '',
-      phone: data.phone,
-      created_at: new Date().toISOString(),
-      status: 'pending'
-    });
-  }
-  
   return {
     ok: true,
     applicant_id: applicantId
@@ -442,39 +386,18 @@ export const mockNextSlotResponse = async (data: InterviewSlotRequest): Promise<
 export const mockSmsLogsResponse = async (params?: any): Promise<SmsLogsResponse> => {
   await new Promise(resolve => setTimeout(resolve, 800));
   
-  if (typeof window !== 'undefined') {
-    const { default: DemoStorage } = await import('./demo-storage');
-    const messages = DemoStorage.getMessages();
-    
-    // パラメータに応じたフィルタリング
-    let filteredMessages = messages;
-    if (params?.status) {
-      filteredMessages = messages.filter(m => m.status === params.status);
-    }
-    if (params?.templateId) {
-      filteredMessages = messages.filter(m => m.content.includes(params.templateId));
-    }
-    
-    // SmsLogフォーマットに変換
-    const logs: SmsLog[] = filteredMessages.map(msg => ({
-      id: msg.id,
-      applicant_id: msg.applicant_id,
-      at: msg.at,
-      channel: msg.channel as 'sms' | 'call' | 'email' | 'note',
-      direction: msg.direction,
-      content: msg.content,
-      operator: 'demo-system',
-      status: (msg.status as "queued" | "sent" | "failed" | "delivered") || 'delivered'
-    }));
-    
-    return {
-      logs,
-      total: logs.length,
-      hasMore: false
-    };
-  }
+  // 静的なモックデータを返す
+  const logs: SmsLog[] = mockSmsLogs.filter(log => {
+    if (params?.status && log.status !== params.status) return false;
+    if (params?.templateId && log.templateId !== params.templateId) return false;
+    return true;
+  });
   
-  return { logs: [], total: 0, hasMore: false };
+  return {
+    logs,
+    total: logs.length,
+    hasMore: false
+  };
 };
 
 // エラーハンドリングヘルパー
