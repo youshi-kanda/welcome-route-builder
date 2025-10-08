@@ -1,0 +1,21 @@
+# ALSOK面接システム - デモ専用 Cloudflare Pages 設定
+name = "alsok-interview-demo"
+compatibility_date = "2023-12-01"
+
+# デモ専用設定
+[site]
+bucket = "dist"
+
+# デモ環境変数
+[vars]
+VITE_DEMO_MODE = "true"
+VITE_DEBUG_MODE = "true"
+VITE_DEFAULT_TZ = "Asia/Tokyo"
+VITE_APP_NAME = "ALSOK採用システム（デモ版）"
+VITE_APP_VERSION = "1.0.0-demo"
+VITE_API_BASE = "https://demo-alsok-interview-system.pages.dev"
+
+# デモ専用ドメイン設定
+[[routes]]
+pattern = "demo.alsok-interview.com/*"
+zone_name = "alsok-interview.com"

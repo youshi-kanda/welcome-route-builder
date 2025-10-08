@@ -2,6 +2,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8787";
 const API_TIMEOUT = 10000; // 10 seconds
 const DEBUG_MODE = import.meta.env.VITE_DEBUG_MODE === 'true';
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
 // デバッグログ
 const debugLog = (message: string, data?: any) => {
@@ -161,6 +162,12 @@ export const api = {
   // 応募受付API
   submitApplication: (data: ApplicationRequest) => {
     debugLog('Submitting application', data);
+    
+    // デモモード: 完全なモック処理
+    if (DEMO_MODE) {
+      return mockApplicationResponse(data);
+    }
+    
     return apiCall<ApplicationResponse>("/api/applications", {
       method: "POST",
       body: JSON.stringify(data),
@@ -170,6 +177,12 @@ export const api = {
   // SMS送信API
   sendSms: (data: SendSmsRequest) => {
     debugLog('Sending SMS', data);
+    
+    // デモモード: モックレスポンスを返す
+    if (DEMO_MODE) {
+      return mockSmsResponse(data);
+    }
+    
     return apiCall<SendSmsResponse>("/api/sms/send", {
       method: "POST",
       body: JSON.stringify(data),
@@ -179,6 +192,12 @@ export const api = {
   // 次の空き枠取得API
   getNextSlot: (data: InterviewSlotRequest) => {
     debugLog('Getting next slot', data);
+    
+    // デモモード: Calendar連携モック
+    if (DEMO_MODE) {
+      return mockNextSlotResponse(data);
+    }
+    
     return apiCall<InterviewSlotResponse>("/api/second/next-slot", {
       method: "POST",
       body: JSON.stringify(data),
@@ -203,6 +222,12 @@ export const api = {
       });
     }
     debugLog('Getting SMS logs', params);
+    
+    // デモモード: ローカルストレージから取得
+    if (DEMO_MODE) {
+      return mockSmsLogsResponse(params);
+    }
+    
     return apiCall<SmsLogsResponse>(
       `/api/sms/logs?${searchParams.toString()}`
     );
@@ -290,6 +315,167 @@ export const mockSmsLogs: SmsLog[] = [
     status: "delivered",
   },
 ];
+
+// デモ用SMS送信モック
+export const mockSmsResponse = async (data: SendSmsRequest): Promise<SendSmsResponse> => {
+  // 実際のSMS送信をシミュレート（遅延付き）
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  const smsContent = generateSmsContent(data);
+  
+  // デモ用SMS内容を画面に通知
+  if (typeof window !== 'undefined') {
+    const timestamp = new Date().toLocaleString('ja-JP');
+    const smsEvent = new CustomEvent('demo-sms-sent', { 
+      detail: {
+        to: data.to,
+        content: smsContent,
+        timestamp,
+        status: 'delivered'
+      }
+    });
+    window.dispatchEvent(smsEvent);
+
+    // デモストレージに保存
+    const { default: DemoStorage } = await import('./demo-storage');
+    DemoStorage.saveMessage({
+      id: `msg_${generateId()}`,
+      applicant_id: data.applicant_id || `phone:${data.to}`,
+      at: new Date().toISOString(),
+      direction: 'out',
+      content: smsContent,
+      channel: 'sms',
+      status: 'delivered'
+    });
+
+    // メール通知送信
+    try {
+      const { default: EmailService } = await import('./emailService');
+      const emailService = EmailService.getInstance();
+      
+      await emailService.sendSmsNotification({
+        to: data.to,
+        smsContent,
+        phoneNumber: data.to,
+        timestamp,
+        templateType: data.templateId || 'unknown',
+        applicantId: data.applicant_id,
+        demoUrl: window.location.origin
+      });
+    } catch (emailError) {
+      console.warn('Email notification failed:', emailError);
+    }
+  }
+  
+  return {
+    ok: true,
+    sid: `DEMO${generateId()}`,
+    status: 'delivered'
+  };
+};
+
+// SMS内容生成（テンプレート処理）
+const generateSmsContent = (data: SendSmsRequest): string => {
+  if (data.body) return data.body;
+  
+  const templates = {
+    'app_received': '{NAME}様、ALSOK採用チームです。応募を受け付けました。受付番号：{APPLICANT_ID}。追ってご連絡いたします。',
+    'chat_completed': '{NAME}様、事前質問にご回答ありがとうございました。二次面接の詳細を後日ご連絡いたします。',
+    '2nd_schedule': '【二次面接のご案内】{NAME}様、{DATE_JP} {START}–{END} で予定いたします。よろしければ「1」と返信、変更は「2」と返信ください。',
+    '2nd_confirmed': '{NAME}様、{DATE_JP} {START}–{END} で二次面接が確定しました。場所：ALSOK本社 3F会議室',
+    'reminder': '【リマインダー】{NAME}様、明日 {START} から面接予定です。ALSOK本社 3F会議室でお待ちしております。'
+  };
+  
+  let content = templates[data.templateId as keyof typeof templates] || 'デモ用SMSメッセージです。';
+  
+  // 変数置換
+  if (data.variables) {
+    Object.entries(data.variables).forEach(([key, value]) => {
+      content = content.replace(new RegExp(`{${key}}`, 'g'), value);
+    });
+  }
+  
+  return content;
+};
+
+// デモ用応募受付モック
+export const mockApplicationResponse = async (data: ApplicationRequest): Promise<ApplicationResponse> => {
+  // リアルな遅延をシミュレート
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  
+  const applicantId = `DEMO_${Date.now().toString(36).toUpperCase()}`;
+  
+  // デモストレージに保存
+  if (typeof window !== 'undefined') {
+    const { default: DemoStorage } = await import('./demo-storage');
+    DemoStorage.saveApplicant({
+      applicant_id: applicantId,
+      name: data.name || '',
+      phone: data.phone,
+      created_at: new Date().toISOString(),
+      status: 'pending'
+    });
+  }
+  
+  return {
+    ok: true,
+    applicant_id: applicantId
+  };
+};
+
+// デモ用面接枠取得モック
+export const mockNextSlotResponse = async (data: InterviewSlotRequest): Promise<InterviewSlotResponse> => {
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  // 明日の14:00を提案
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(14, 0, 0, 0);
+  
+  return {
+    ok: true,
+    slotAt: tomorrow.toISOString()
+  };
+};
+
+// デモ用SMSログモック
+export const mockSmsLogsResponse = async (params?: any): Promise<SmsLogsResponse> => {
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  if (typeof window !== 'undefined') {
+    const { default: DemoStorage } = await import('./demo-storage');
+    const messages = DemoStorage.getMessages();
+    
+    // パラメータに応じたフィルタリング
+    let filteredMessages = messages;
+    if (params?.status) {
+      filteredMessages = messages.filter(m => m.status === params.status);
+    }
+    if (params?.templateId) {
+      filteredMessages = messages.filter(m => m.content.includes(params.templateId));
+    }
+    
+    // SmsLogフォーマットに変換
+    const logs: SmsLog[] = filteredMessages.map(msg => ({
+      id: msg.id,
+      applicant_id: msg.applicant_id,
+      at: msg.at,
+      channel: msg.channel as 'sms' | 'call' | 'email' | 'note',
+      direction: msg.direction,
+      content: msg.content,
+      operator: 'demo-system',
+      status: (msg.status as "queued" | "sent" | "failed" | "delivered") || 'delivered'
+    }));
+    
+    return {
+      logs,
+      total: logs.length,
+      hasMore: false
+    };
+  }
+  
+  return { logs: [], total: 0, hasMore: false };
+};
 
 // エラーハンドリングヘルパー
 export const handleApiError = (error: unknown): string => {
