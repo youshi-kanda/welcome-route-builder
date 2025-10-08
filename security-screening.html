@@ -11,10 +11,11 @@
         }
         
         .chat-container {
-            height: calc(100vh - 180px);
             overflow-y: auto;
             scroll-behavior: smooth;
             padding-bottom: 10px;
+            flex-grow: 1;
+            max-height: calc(100vh - 220px);
         }
         
         .message-ai {
@@ -92,9 +93,34 @@
             background: #94a3b8;
             border-radius: 2px;
         }
+        
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .chat-container {
+                max-height: calc(100vh - 250px);
+            }
+            
+            #choices-container {
+                max-height: 35vh !important;
+            }
+            
+            #response-area {
+                max-height: 45vh !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .chat-container {
+                max-height: calc(100vh - 280px);
+            }
+            
+            #choices-container {
+                max-height: 30vh !important;
+            }
+        }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 flex flex-col h-screen">
     
     <!-- ヘッダー -->
     <header class="gradient-bg shadow-lg">
@@ -123,7 +149,7 @@
     </header>
 
     <!-- チャットエリア -->
-    <main class="chat-container px-4 py-4" id="chat-container">
+    <main class="chat-container px-4 py-4 flex-1" id="chat-container">
         
         <!-- ウェルカムメッセージ -->
         <div class="message-ai rounded-2xl p-4 mb-4 fade-in">
@@ -148,11 +174,11 @@
     </main>
 
     <!-- 回答エリア -->
-    <footer class="fixed bottom-0 left-0 right-0 bg-white bg-opacity-95 backdrop-blur-sm border-t p-3 max-h-48 overflow-y-auto" id="response-area">
+    <footer class="bg-white bg-opacity-95 backdrop-blur-sm border-t p-3 overflow-y-auto flex-shrink-0" style="max-height: 40vh;" id="response-area">
         
         <!-- 選択肢回答 -->
         <div id="choice-form" class="hidden">
-            <div id="choices-container" class="grid grid-cols-1 gap-2 mb-3 max-h-32 overflow-y-auto">
+            <div id="choices-container" class="grid grid-cols-1 gap-2 mb-3 overflow-y-auto" style="max-height: 40vh;">
                 <!-- 動的に生成される選択肢 -->
             </div>
             <div class="text-center">
@@ -371,6 +397,8 @@
             setTimeout(() => {
                 addAIMessage(step.question, step.instruction);
                 showInputForm(step);
+                // 新しい質問が追加された後にスクロール
+                setTimeout(() => scrollToBottom(), 300);
             }, 1000);
         }
         
@@ -741,8 +769,11 @@
         // チャット最下部へスクロール
         function scrollToBottom() {
             setTimeout(() => {
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }, 100);
+                const chatContainer = document.getElementById('chat-container');
+                if (chatContainer) {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            }, 200);
         }
         
         // ページ離脱確認
