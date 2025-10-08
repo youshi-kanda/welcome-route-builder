@@ -3,10 +3,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
-import Chat from "./pages/Chat";
-import Reserve from "./pages/Reserve";
-import Admin from "./pages/Admin";
+import DemoHome from "./pages/DemoHome";
+import DemoPhone from "./pages/DemoPhone";
+import DemoMobile from "./pages/DemoMobile";
+import DemoAdmin from "./pages/DemoAdmin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -18,11 +18,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* ALSOK本番システム */}
-          <Route path="/" element={<Home />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/reserve" element={<Reserve />} />
-          <Route path="/admin" element={<Admin />} />
+          {/* ALSOK デモシステム */}
+          <Route path="/" element={<DemoHome />} />
+          <Route path="/phone" element={<DemoPhone />} />
+          <Route path="/mobile" element={<DemoMobile />} />
+          <Route path="/admin" element={<DemoAdmin />} />
           
           {/* 404エラーページ */}
           <Route path="*" element={<NotFound />} />

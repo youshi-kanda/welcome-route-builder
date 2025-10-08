@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALSOK Demo System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div id="home-screen" class="max-w-lg mx-auto">
+            <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+                <h1 class="text-3xl font-bold text-gray-900 mb-4">
+                    🛡️ ALSOK Demo System
+                </h1>
+                <p class="text-gray-600 mb-8">
+                    完全な採用ワークフローをデモンストレーション
+                </p>
+                
+                <div class="space-y-4">
+                    <button onclick="showAdminScreen()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                        PC管理画面
+                    </button>
+                    
+                    <button onclick="showPhoneScreen()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                        電話受付
+                    </button>
+                    
+                    <button onclick="showMobileScreen()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                        モバイル申込
+                    </button>
+                </div>
+                
+                <p class="text-sm text-gray-500 mt-6">
+                    ※ 現在開発機能です。完全なデモにはQRコードから各機能にアクセスします。
+                </p>
+            </div>
+        </div>
+
+        <!-- Admin Screen -->
+        <div id="admin-screen" class="hidden max-w-6xl mx-auto">
+            <div class="flex items-center justify-between mb-6">
+                <button onclick="showHomeScreen()" class="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800">
+                    ← デモホームに戻る
+                </button>
+                <button onclick="refreshData()" class="flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                    🔄 更新
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-white rounded-lg p-4 text-center shadow">
+                            <div class="text-2xl mb-2">👥</div>
+                            <p class="text-2xl font-bold" id="total-count">0</p>
+                            <p class="text-sm text-gray-600">総応募者数</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 text-center shadow">
+                            <div class="text-2xl mb-2">💬</div>
+                            <p class="text-2xl font-bold" id="sms-count">0</p>
+                            <p class="text-sm text-gray-600">SMS送信</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 text-center shadow">
+                            <div class="text-2xl mb-2">📞</div>
+                            <p class="text-2xl font-bold" id="interview-count">0</p>
+                            <p class="text-sm text-gray-600">面接開始</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 text-center shadow">
+                            <div class="text-2xl mb-2">✅</div>
+                            <p class="text-2xl font-bold" id="completed-count">0</p>
+                            <p class="text-sm text-gray-600">面接完了</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg p-6 shadow">
+                        <h3 class="text-lg font-semibold mb-4">応募者一覧</h3>
+                        <div id="applicants-list">
+                            <div class="text-center py-8 text-gray-500">
+                                <div class="text-4xl mb-4">📞</div>
+                                <p>まだ応募者がいません</p>
+                                <p class="text-sm">電話受付またはQRコードからデモを開始してください</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-white rounded-lg p-6 shadow">
+                        <h3 class="text-lg font-semibold mb-4">面接QRコード</h3>
+                        <div class="text-center">
+                            <div id="qrcode" class="mb-4"></div>
+                            <p class="text-sm text-gray-600 mb-4">
+                                スマートフォンでスキャンして面接を開始
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg p-6 shadow">
+                        <h3 class="text-lg font-semibold mb-4">デモアクション</h3>
+                        <div class="space-y-3">
+                            <button onclick="showPhoneScreen()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg">
+                                📞 電話受付シミュレーション
+                            </button>
+                            <button onclick="showMobileScreen()" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg">
+                                💬 モバイル面接体験
+                            </button>
+                            <button onclick="clearDemoData()" class="w-full border border-red-200 text-red-600 hover:bg-red-50 py-2 px-4 rounded-lg">
+                                🗑️ デモデータクリア
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phone Screen -->
+        <div id="phone-screen" class="hidden max-w-md mx-auto">
+            <button onclick="showHomeScreen()" class="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 mb-4">
+                ← デモホームに戻る
+            </button>
+
+            <div class="bg-white rounded-lg p-6 shadow-lg">
+                <div class="text-center mb-6">
+                    <h2 class="text-xl font-bold">📞 電話受付シミュレーション</h2>
+                </div>
+
+                <div id="phone-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">お名前</label>
+                            <input type="text" id="phone-name" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="山田太郎">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">電話番号</label>
+                            <input type="tel" id="phone-number" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="090-1234-5678">
+                        </div>
+                        <button onclick="startCall()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg">
+                            📞 ALSOK採用窓口に電話をかける
+                        </button>
+                    </div>
+                </div>
+
+                <div id="phone-call" class="hidden text-center py-8">
+                    <div class="text-6xl mb-4" id="call-emoji">📞</div>
+                    <p class="text-lg font-medium mb-4" id="call-status">呼び出し中...</p>
+                    <div id="call-completed" class="hidden">
+                        <div class="text-6xl mb-4">✅</div>
+                        <p class="text-sm text-gray-600 mb-4">
+                            PC管理画面でQRコードを確認し、<br>
+                            モバイルデバイスでスキャンして面接を開始してください
+                        </p>
+                        <button onclick="showAdminScreen()" class="w-full border border-gray-300 hover:bg-gray-50 py-2 px-4 rounded-lg">
+                            PC管理画面を見る
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Screen -->
+        <div id="mobile-screen" class="hidden max-w-md mx-auto">
+            <button onclick="showHomeScreen()" class="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 mb-4">
+                ← デモホームに戻る
+            </button>
+
+            <div id="mobile-interview" class="bg-white rounded-lg p-6 shadow-lg">
+                <div class="text-center mb-6">
+                    <h2 class="text-xl font-bold">📱 AI面接システム</h2>
+                    <p class="text-sm text-gray-600">質問 <span id="current-q">1</span> / 5</p>
+                </div>
+
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-6">
+                    <div id="progress-bar" class="bg-orange-600 h-2 rounded-full transition-all duration-300" style="width: 20%"></div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-base font-medium mb-2">質問</label>
+                    <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                        <p id="current-question">自己紹介をお願いします（お名前、年齢、職歴など）</p>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2">回答</label>
+                    <textarea id="current-answer" class="w-full min-h-[120px] border border-gray-300 rounded-lg px-3 py-2" placeholder="こちらに回答を入力してください..."></textarea>
+                </div>
+
+                <button onclick="nextQuestion()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-lg">
+                    📤 <span id="next-btn-text">次の質問へ</span>
+                </button>
+
+                <div class="mt-4 text-sm text-gray-600">
+                    回答済み: <span id="answered-count">0</span>問
+                </div>
+            </div>
+
+            <div id="mobile-completed" class="hidden bg-white rounded-lg p-6 shadow-lg text-center">
+                <div class="text-6xl mb-4">✅</div>
+                <h2 class="text-2xl font-bold mb-2">面接完了！</h2>
+                <p class="text-gray-600 mb-4">
+                    ありがとうございました。<br>
+                    結果は後日ご連絡いたします。
+                </p>
+                <p class="text-sm text-gray-500 mb-6">
+                    応募者ID: <span id="applicant-id"></span>
+                </p>
+                <button onclick="showHomeScreen()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg">
+                    デモホームに戻る
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Demo data storage
+        let demoData = {
+            applicants: []
+        };
+
+        let currentQuestionIndex = 0;
+        let responses = [];
+        
+        const questions = [
+            "自己紹介をお願いします（お名前、年齢、職歴など）",
+            "警備業に興味を持ったきっかけを教えてください",
+            "夜勤や不規則な勤務時間に対応できますか？",
+            "チームワークを重視する場面での経験はありますか？",
+            "最後に、ALSOKで働く意気込みを聞かせてください"
+        ];
+
+        // Screen management
+        function showScreen(screenId) {
+            document.querySelectorAll('[id$="-screen"]').forEach(screen => {
+                screen.classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function showHomeScreen() {
+            showScreen('home-screen');
+        }
+
+        function showAdminScreen() {
+            showScreen('admin-screen');
+            generateQRCode();
+            updateAdminDashboard();
+        }
+
+        function showPhoneScreen() {
+            showScreen('phone-screen');
+            document.getElementById('phone-form').classList.remove('hidden');
+            document.getElementById('phone-call').classList.add('hidden');
+        }
+
+        function showMobileScreen() {
+            showScreen('mobile-screen');
+            document.getElementById('mobile-interview').classList.remove('hidden');
+            document.getElementById('mobile-completed').classList.add('hidden');
+            resetInterview();
+        }
+
+        // QR Code generation
+        function generateQRCode() {
+            const qrContainer = document.getElementById('qrcode');
+            const mobileUrl = window.location.origin + window.location.pathname + '#mobile';
+            
+            if (typeof qrcode !== 'undefined') {
+                const qr = qrcode(0, 'M');
+                qr.addData(mobileUrl);
+                qr.make();
+                qrContainer.innerHTML = qr.createSvgTag({
+                    cellSize: 4,
+                    margin: 0,
+                    scalable: true
+                });
+            } else {
+                qrContainer.innerHTML = '<div class="w-48 h-48 bg-gray-200 flex items-center justify-center rounded-lg">QRコード</div>';
+            }
+        }
+
+        // Phone simulation
+        function startCall() {
+            const name = document.getElementById('phone-name').value;
+            const phone = document.getElementById('phone-number').value;
+
+            if (!name || !phone) {
+                alert('名前と電話番号を入力してください');
+                return;
+            }
+
+            document.getElementById('phone-form').classList.add('hidden');
+            document.getElementById('phone-call').classList.remove('hidden');
+
+            const statuses = [
+                { text: "📞 呼び出し中...", emoji: "📞" },
+                { text: "🤖 ALSOKです。採用面接のお申し込みありがとうございます", emoji: "🤖" },
+                { text: "📱 SMS送信中...", emoji: "📱" },
+                { text: "✅ 完了！QRコードをPC管理画面でご確認ください", emoji: "✅" }
+            ];
+
+            let step = 0;
+            const interval = setInterval(() => {
+                if (step < statuses.length) {
+                    document.getElementById('call-emoji').textContent = statuses[step].emoji;
+                    document.getElementById('call-status').textContent = statuses[step].text;
+                    step++;
+                } else {
+                    clearInterval(interval);
+                    
+                    // Add applicant to demo data
+                    const applicantId = 'APP' + Date.now().toString().slice(-6);
+                    demoData.applicants.push({
+                        id: applicantId,
+                        name: name,
+                        phone: phone,
+                        status: 'sms_sent',
+                        created_at: new Date().toISOString(),
+                        interview_responses: [],
+                        sms_count: 1
+                    });
+
+                    document.getElementById('call-completed').classList.remove('hidden');
+                }
+            }, 2000);
+        }
+
+        // Mobile interview
+        function resetInterview() {
+            currentQuestionIndex = 0;
+            responses = [];
+            updateInterviewDisplay();
+        }
+
+        function updateInterviewDisplay() {
+            document.getElementById('current-q').textContent = currentQuestionIndex + 1;
+            document.getElementById('current-question').textContent = questions[currentQuestionIndex];
+            document.getElementById('current-answer').value = '';
+            document.getElementById('progress-bar').style.width = ((currentQuestionIndex + 1) / questions.length * 100) + '%';
+            document.getElementById('answered-count').textContent = responses.length;
+            document.getElementById('next-btn-text').textContent = currentQuestionIndex === questions.length - 1 ? '面接を完了' : '次の質問へ';
+        }
+
+        function nextQuestion() {
+            const answer = document.getElementById('current-answer').value.trim();
+            if (!answer) {
+                alert('回答を入力してください');
+                return;
+            }
+
+            responses.push(answer);
+
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                updateInterviewDisplay();
+            } else {
+                completeInterview();
+            }
+        }
+
+        function completeInterview() {
+            const applicantId = 'APP' + Date.now().toString().slice(-6);
+            
+            // Update or add applicant
+            let applicant = demoData.applicants.find(a => a.status === 'sms_sent');
+            if (applicant) {
+                applicant.status = 'interview_completed';
+                applicant.interview_responses = responses;
+                applicant.interview_completed_at = new Date().toISOString();
+            } else {
+                demoData.applicants.push({
+                    id: applicantId,
+                    name: 'デモ応募者',
+                    phone: '090-1234-5678',
+                    status: 'interview_completed',
+                    created_at: new Date().toISOString(),
+                    interview_completed_at: new Date().toISOString(),
+                    interview_responses: responses,
+                    sms_count: 1
+                });
+            }
+
+            document.getElementById('applicant-id').textContent = applicant ? applicant.id : applicantId;
+            document.getElementById('mobile-interview').classList.add('hidden');
+            document.getElementById('mobile-completed').classList.remove('hidden');
+        }
+
+        // Admin dashboard
+        function updateAdminDashboard() {
+            const totalCount = demoData.applicants.length;
+            const smsCount = demoData.applicants.filter(a => a.sms_count > 0).length;
+            const interviewCount = demoData.applicants.filter(a => a.interview_responses && a.interview_responses.length > 0).length;
+            const completedCount = demoData.applicants.filter(a => a.status === 'interview_completed').length;
+
+            document.getElementById('total-count').textContent = totalCount;
+            document.getElementById('sms-count').textContent = smsCount;
+            document.getElementById('interview-count').textContent = interviewCount;
+            document.getElementById('completed-count').textContent = completedCount;
+
+            // Update applicants list
+            const listContainer = document.getElementById('applicants-list');
+            if (demoData.applicants.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <div class="text-4xl mb-4">📞</div>
+                        <p>まだ応募者がいません</p>
+                        <p class="text-sm">電話受付またはQRコードからデモを開始してください</p>
+                    </div>
+                `;
+            } else {
+                listContainer.innerHTML = demoData.applicants.map(applicant => {
+                    const statusBadge = getStatusBadge(applicant.status);
+                    const responseCount = applicant.interview_responses ? applicant.interview_responses.length : 0;
+                    
+                    return `
+                        <div class="border rounded-lg p-4 mb-4">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <h4 class="font-semibold">${applicant.name}</h4>
+                                    <p class="text-sm text-gray-600">${applicant.phone}</p>
+                                    <p class="text-xs text-gray-500">
+                                        ID: ${applicant.id} | 受付: ${new Date(applicant.created_at).toLocaleString('ja-JP')}
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    ${statusBadge}
+                                    <div class="mt-2 text-xs text-gray-500">
+                                        <div>SMS: ${applicant.sms_count || 0}件</div>
+                                        <div>面接: ${responseCount}問回答</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function getStatusBadge(status) {
+            switch (status) {
+                case 'sms_sent':
+                    return '<span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">SMS送信済み</span>';
+                case 'interview_completed':
+                    return '<span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">面接完了</span>';
+                default:
+                    return '<span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">新規</span>';
+            }
+        }
+
+        function refreshData() {
+            updateAdminDashboard();
+        }
+
+        function clearDemoData() {
+            if (confirm('デモデータをすべてクリアしますか？')) {
+                demoData.applicants = [];
+                updateAdminDashboard();
+            }
+        }
+
+        // URL hash navigation
+        function handleHashChange() {
+            const hash = window.location.hash.slice(1);
+            switch (hash) {
+                case 'admin':
+                    showAdminScreen();
+                    break;
+                case 'phone':
+                    showPhoneScreen();
+                    break;
+                case 'mobile':
+                    showMobileScreen();
+                    break;
+                default:
+                    showHomeScreen();
+            }
+        }
+
+        // Initialize
+        window.addEventListener('hashchange', handleHashChange);
+        window.addEventListener('load', () => {
+            handleHashChange();
+            if (window.location.hash === '' || window.location.hash === '#') {
+                showHomeScreen();
+            }
+        });
+
+        // Update admin dashboard periodically
+        setInterval(() => {
+            if (!document.getElementById('admin-screen').classList.contains('hidden')) {
+                updateAdminDashboard();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
