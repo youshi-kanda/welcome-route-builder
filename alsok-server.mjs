@@ -38,8 +38,8 @@ const server = createServer(async (req, res) => {
       // 応募者ホーム画面（スマホ/PC対応）
       filePath = join(__dirname, 'mobile-home.html');
     } else if (pathname === '/interview') {
-      // AI面接チャット画面
-      filePath = join(__dirname, 'interview-chat.html');
+      // セキュリティ業界専用スクリーニング画面
+      filePath = join(__dirname, 'security-screening.html');
     } else if (pathname === '/completed') {
       // 面接完了画面
       filePath = join(__dirname, 'interview-completed.html');

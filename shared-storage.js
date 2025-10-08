@@ -8,7 +8,7 @@ class AlsokDemoStorage {
         this.storageKey = 'alsok_demo_data';
         this.eventName = 'alsokDataUpdate';
         
-        // 初期データ構造
+        // 初期データ構造（警備会社対応版）
         this.defaultData = {
             applicants: [],
             systemLogs: [],
@@ -16,7 +16,21 @@ class AlsokDemoStorage {
                 totalApplicants: 0,
                 smsSent: 0,
                 interviewsStarted: 0,
-                interviewsCompleted: 0
+                interviewsCompleted: 0,
+                // 警備業特化統計
+                applicationSources: {
+                    phone: 0,
+                    indeed: 0,
+                    hellowork: 0,
+                    website: 0,
+                    sns: 0,
+                    magazine: 0,
+                    referral: 0,
+                    other: 0
+                },
+                disqualified: 0,
+                qualified: 0,
+                interviewEligible: 0
             },
             lastUpdated: new Date().toISOString()
         };
@@ -68,19 +82,32 @@ class AlsokDemoStorage {
         }));
     }
     
-    // 応募者追加
+    // 応募者追加（警備業対応版）
     addApplicant(applicantInfo) {
         const data = this.getData();
         const applicant = {
             id: applicantInfo.id || this.generateId(),
             name: applicantInfo.name,
             phone: applicantInfo.phone,
-            status: 'registered', // registered -> interview_started -> interview_completed
+            motivation: applicantInfo.motivation || '',
+            
+            // 警備業特化項目
+            applicationSource: null, // 応募経路
+            disqualificationReasons: [], // 欠格事由
+            isQualified: null, // 採用可能性判定
+            interviewEligible: null, // 面接実施可否
+            recruitmentScore: 0, // 採用可能性スコア
+            
+            status: 'registered', // registered -> screening -> interview_started -> interview_completed
             createdAt: new Date().toISOString(),
+            screeningStartedAt: null, // 事前精査開始時刻
+            screeningCompletedAt: null, // 事前精査完了時刻
             interviewStartedAt: null,
             interviewCompletedAt: null,
             responses: [],
-            currentQuestion: 0
+            screeningResponses: [], // 事前精査の回答
+            currentQuestion: 0,
+            currentScreeningStep: 0 // 現在の精査ステップ
         };
         
         data.applicants.push(applicant);
@@ -142,6 +169,32 @@ class AlsokDemoStorage {
     getAllApplicants() {
         const data = this.getData();
         return data.applicants;
+    }
+    
+    // 事前精査回答追加
+    addScreeningResponse(applicantId, step, question, answer, answerType = 'text') {
+        const data = this.getData();
+        const applicant = data.applicants.find(a => a.id === applicantId);
+        
+        if (!applicant) {
+            console.error('応募者が見つかりません:', applicantId);
+            return false;
+        }
+        
+        applicant.screeningResponses.push({
+            step: step,
+            question: question,
+            answer: answer,
+            answerType: answerType, // text, choice, boolean
+            timestamp: new Date().toISOString()
+        });
+        
+        applicant.currentScreeningStep = step;
+        
+        this.addLog('事前精査', `${applicant.name}: ステップ${step} 回答完了`, 'screening');
+        this.saveData(data);
+        
+        return true;
     }
     
     // 面接回答追加
@@ -225,6 +278,102 @@ class AlsokDemoStorage {
     clearAll() {
         this.saveData(this.defaultData);
         this.addLog('システムリセット', 'すべてのデモデータをクリアしました', 'warning');
+    }
+    
+    // 応募経路設定
+    setApplicationSource(applicantId, source) {
+        const data = this.getData();
+        const applicant = data.applicants.find(a => a.id === applicantId);
+        
+        if (!applicant) {
+            return false;
+        }
+        
+        applicant.applicationSource = source;
+        
+        // 応募経路統計更新
+        const sourceMap = {
+            1: 'phone',
+            2: 'indeed', 
+            3: 'hellowork',
+            4: 'website',
+            5: 'sns',
+            6: 'magazine',
+            7: 'referral',
+            8: 'other'
+        };
+        
+        const sourceKey = sourceMap[source];
+        if (sourceKey && data.stats.applicationSources[sourceKey] !== undefined) {
+            data.stats.applicationSources[sourceKey]++;
+        }
+        
+        this.addLog('応募経路確認', `${applicant.name}: ${this.getSourceName(source)}から応募`, 'info');
+        this.saveData(data);
+        
+        return true;
+    }
+    
+    // 欠格事由チェック
+    setDisqualificationCheck(applicantId, reasons = []) {
+        const data = this.getData();
+        const applicant = data.applicants.find(a => a.id === applicantId);
+        
+        if (!applicant) {
+            return false;
+        }
+        
+        applicant.disqualificationReasons = reasons;
+        applicant.isQualified = reasons.length === 0;
+        
+        if (reasons.length > 0) {
+            data.stats.disqualified++;
+            this.addLog('欠格事由確認', `${applicant.name}: 欠格事由により不適格`, 'warning');
+        } else {
+            data.stats.qualified++;
+            this.addLog('欠格事由確認', `${applicant.name}: 法的要件クリア`, 'success');
+        }
+        
+        this.saveData(data);
+        return true;
+    }
+    
+    // 面接実施可否判定
+    setInterviewEligibility(applicantId, eligible, score = 0) {
+        const data = this.getData();
+        const applicant = data.applicants.find(a => a.id === applicantId);
+        
+        if (!applicant) {
+            return false;
+        }
+        
+        applicant.interviewEligible = eligible;
+        applicant.recruitmentScore = score;
+        
+        if (eligible) {
+            data.stats.interviewEligible++;
+            this.addLog('面接判定', `${applicant.name}: 面接実施決定 (スコア: ${score})`, 'success');
+        } else {
+            this.addLog('面接判定', `${applicant.name}: 面接見送り (スコア: ${score})`, 'warning');
+        }
+        
+        this.saveData(data);
+        return true;
+    }
+    
+    // 応募経路名取得
+    getSourceName(sourceNumber) {
+        const sources = {
+            1: 'お電話でのお問い合わせ',
+            2: 'Indeed（インディード）',
+            3: 'ハローワーク',
+            4: '弊社ホームページ',
+            5: 'SNS（Instagram、Twitter等）',
+            6: '求人誌・フリーペーパー',
+            7: '知人からの紹介',
+            8: 'その他'
+        };
+        return sources[sourceNumber] || '不明';
     }
     
     // ID生成

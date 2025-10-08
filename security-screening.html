@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ALSOK事前精査 - 採用担当チャット</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        }
+        
+        .chat-container {
+            height: calc(100vh - 140px);
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        
+        .message-ai {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-left: 4px solid #0ea5e9;
+        }
+        
+        .message-user {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+        
+        .choice-button {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .choice-button:hover {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .choice-button.selected {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-color: #059669;
+        }
+        
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .warning-alert {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .disqualified-alert {
+            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+            border-left: 4px solid #ef4444;
+        }
+        
+        .qualified-alert {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-left: 4px solid #10b981;
+        }
+        
+        .ai-avatar {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        }
+        
+        /* スクロールバーのカスタマイズ */
+        .chat-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .chat-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    
+    <!-- ヘッダー -->
+    <header class="gradient-bg shadow-lg">
+        <div class="px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="ai-avatar w-10 h-10 rounded-full flex items-center justify-center text-white text-lg">
+                        👤
+                    </div>
+                    <div>
+                        <h1 class="text-white font-semibold">ALSOK採用担当者</h1>
+                        <p class="text-blue-200 text-sm" id="screening-status">事前精査実施中</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-white text-sm">ステップ <span id="step-counter">1</span>/5</div>
+                    <div class="text-blue-200 text-xs" id="applicant-name">---</div>
+                </div>
+            </div>
+            
+            <!-- プログレスバー -->
+            <div class="mt-3 bg-blue-900 bg-opacity-50 rounded-full h-2">
+                <div id="progress-bar" class="progress-bar bg-white h-2 rounded-full" style="width: 20%"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- チャットエリア -->
+    <main class="chat-container px-4 py-4" id="chat-container">
+        
+        <!-- ウェルカムメッセージ -->
+        <div class="message-ai rounded-2xl p-4 mb-4 fade-in">
+            <div class="flex items-start space-x-3">
+                <div class="ai-avatar w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0 mt-1">
+                    👤
+                </div>
+                <div>
+                    <div class="font-medium text-gray-800 mb-1">ALSOK採用担当者</div>
+                    <div class="text-gray-700 leading-relaxed">
+                        この度は弊社警備員求人にご応募いただき、ありがとうございます！🌟<br><br>
+                        面接前に必要な確認事項がございますので、いくつか質問させていただきます。<br>
+                        （所要時間：5〜8分程度）<br><br>
+                        この確認により、お互いにとってより良い面接を準備できます。正直にお答えいただければと思います😊
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 動的メッセージがここに追加されます -->
+        
+    </main>
+
+    <!-- 回答エリア -->
+    <footer class="fixed bottom-0 left-0 right-0 bg-white bg-opacity-95 backdrop-blur-sm border-t p-4" id="response-area">
+        
+        <!-- 選択肢回答 -->
+        <div id="choice-form" class="hidden">
+            <div id="choices-container" class="grid gap-3 mb-4">
+                <!-- 動的に生成される選択肢 -->
+            </div>
+            <div class="text-center">
+                <button 
+                    id="choice-submit-btn" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled
+                >
+                    📤 回答を送信
+                </button>
+            </div>
+        </div>
+        
+        <!-- テキスト入力回答 -->
+        <div id="text-form" class="hidden space-y-3">
+            <div class="flex items-start space-x-3">
+                <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0 mt-2">
+                    👤
+                </div>
+                <div class="flex-1">
+                    <textarea 
+                        id="text-input" 
+                        placeholder="こちらに詳しくご記入ください..."
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none resize-none"
+                        rows="3"
+                        maxlength="500"
+                    ></textarea>
+                    <div class="flex items-center justify-between mt-2">
+                        <div class="text-xs text-gray-500">
+                            <span id="char-count">0</span>/500 文字
+                        </div>
+                        <button 
+                            id="text-submit-btn" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled
+                        >
+                            📤 送信
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 処理中状態 -->
+        <div id="processing-state" class="hidden text-center py-4">
+            <div class="inline-flex items-center space-x-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-lg">
+                <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="2"/>
+                    <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <span>回答を処理中...</span>
+            </div>
+        </div>
+        
+        <!-- 精査完了状態 -->
+        <div id="completed-state" class="hidden text-center py-4">
+            <div id="completion-message" class="px-4 py-2 rounded-lg inline-block">
+                ✅ 事前精査が完了しました
+            </div>
+        </div>
+    </footer>
+
+    <!-- 共有ストレージライブラリ -->
+    <script src="shared-storage.js"></script>
+    
+    <script>
+        // グローバル変数
+        let applicantId = null;
+        let currentStep = 0;
+        let applicantData = null;
+        let isProcessing = false;
+        let selectedChoice = null;
+        let disqualificationReasons = [];
+        
+        // 精査ステップ定義
+        const screeningSteps = [
+            {
+                id: 1,
+                type: 'choice',
+                question: 'まず、どちらから弊社の求人をお知りになりましたか？',
+                choices: [
+                    { id: 1, text: '1⃣ お電話でのお問い合わせ' },
+                    { id: 2, text: '2⃣ Indeed（インディード）' },
+                    { id: 3, text: '3⃣ ハローワーク' },
+                    { id: 4, text: '4⃣ 弊社ホームページ' },
+                    { id: 5, text: '5⃣ SNS（Instagram、Twitter等）' },
+                    { id: 6, text: '6⃣ 求人誌・フリーペーパー' },
+                    { id: 7, text: '7⃣ 知人からの紹介' },
+                    { id: 8, text: '8⃣ その他' }
+                ],
+                instruction: '番号でお答えください。'
+            },
+            {
+                id: 2,
+                type: 'choice',
+                question: '警備業法に基づき、以下の事項について確認させていただきます。\n\n過去に以下のような経歴はございますか？',
+                choices: [
+                    { id: 1, text: '禁錮以上の刑に処せられた' },
+                    { id: 2, text: '警備業法違反により罰金刑を受けた' },
+                    { id: 3, text: '精神機能の障害により警備業務を適正に行うに当たって必要な認知・判断・意思疎通を適切に行うことができない' },
+                    { id: 4, text: 'アルコール、麻薬、大麻、あへん又は覚醒剤の中毒者' },
+                    { id: 5, text: '暴力団員又は暴力団員でなくなった日から5年を経過しない者' },
+                    { id: 6, text: '上記のいずれにも該当しない' }
+                ],
+                instruction: '該当するものをすべてお選びください。正直にお答えください。',
+                multiSelect: true
+            },
+            {
+                id: 3,
+                type: 'choice',
+                question: '警備業務への取り組み姿勢についてお聞きします。\n\n継続的に勤務していただくことが重要ですが、どのくらいの期間お勤めいただけますか？',
+                choices: [
+                    { id: 1, text: '1年以上の長期勤務を希望' },
+                    { id: 2, text: '半年〜1年程度' },
+                    { id: 3, text: '3ヶ月〜半年程度' },
+                    { id: 4, text: '短期間（数ヶ月以内）' },
+                    { id: 5, text: '未定・状況による' }
+                ],
+                instruction: 'ご希望に近いものをお選びください。'
+            },
+            {
+                id: 4,
+                type: 'choice',
+                question: '警備業務の特性上、体力面での確認をさせていただきます。\n\n以下の業務に対応可能でしょうか？',
+                choices: [
+                    { id: 1, text: '立哨業務（長時間の立ち仕事）' },
+                    { id: 2, text: '巡回業務（歩行・階段昇降）' },
+                    { id: 3, text: '夜勤業務（深夜勤務）' },
+                    { id: 4, text: '交通誘導（屋外作業）' },
+                    { id: 5, text: '上記すべて対応可能' },
+                    { id: 6, text: '一部対応困難' }
+                ],
+                instruction: '対応可能なものをお選びください。',
+                multiSelect: true
+            },
+            {
+                id: 5,
+                type: 'text',
+                question: '最後に、警備員として働く上での意気込みや、特にアピールしたいことがあれば教えてください。',
+                instruction: '簡潔で構いませんので、あなたの思いをお聞かせください。',
+                placeholder: '例：責任感を持って地域の安全に貢献したい、など...'
+            }
+        ];
+        
+        // DOM要素
+        const chatContainer = document.getElementById('chat-container');
+        const stepCounter = document.getElementById('step-counter');
+        const progressBar = document.getElementById('progress-bar');
+        const applicantNameEl = document.getElementById('applicant-name');
+        const screeningStatus = document.getElementById('screening-status');
+        
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeScreening();
+        });
+        
+        // 事前精査初期化
+        function initializeScreening() {
+            // URLパラメータから応募者ID取得
+            const urlParams = new URLSearchParams(window.location.search);
+            applicantId = urlParams.get('id');
+            
+            if (!applicantId) {
+                alert('エラー: 応募者IDが見つかりません');
+                window.location.href = '/mobile';
+                return;
+            }
+            
+            // 応募者データ取得
+            applicantData = window.alsokStorage.getApplicant(applicantId);
+            if (!applicantData) {
+                alert('エラー: 応募者情報が見つかりません');
+                window.location.href = '/mobile';
+                return;
+            }
+            
+            // UI初期化
+            applicantNameEl.textContent = applicantData.name;
+            
+            // 精査開始状態に更新
+            window.alsokStorage.updateApplicant(applicantId, {
+                status: 'screening',
+                screeningStartedAt: new Date().toISOString()
+            });
+            
+            // 最初の質問を表示
+            setTimeout(() => {
+                showNextStep();
+            }, 2000);
+        }
+        
+        // 次のステップを表示
+        function showNextStep() {
+            if (currentStep >= screeningSteps.length) {
+                completeScreening();
+                return;
+            }
+            
+            const step = screeningSteps[currentStep];
+            
+            // UI更新
+            stepCounter.textContent = step.id;
+            progressBar.style.width = `${(step.id / screeningSteps.length) * 100}%`;
+            screeningStatus.textContent = `ステップ ${step.id}`;
+            
+            // 質問メッセージを追加
+            setTimeout(() => {
+                addAIMessage(step.question, step.instruction);
+                showInputForm(step);
+            }, 1000);
+        }
+        
+        // AIメッセージ追加
+        function addAIMessage(text, instruction = '') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message-ai rounded-2xl p-4 mb-4 fade-in';
+            
+            messageDiv.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <div class="ai-avatar w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0 mt-1">
+                        👤
+                    </div>
+                    <div>
+                        <div class="font-medium text-gray-800 mb-1">ALSOK採用担当者</div>
+                        <div class="text-gray-700 leading-relaxed">
+                            ${text.replace(/\n/g, '<br>')}
+                        </div>
+                        ${instruction ? `
+                            <div class="text-xs text-blue-600 mt-3 bg-blue-50 rounded-lg p-2">
+                                💡 ${instruction}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        // ユーザーメッセージ追加
+        function addUserMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message-user rounded-2xl p-4 mb-4 fade-in ml-8';
+            
+            messageDiv.innerHTML = `
+                <div class="flex items-start space-x-3 justify-end">
+                    <div class="text-right">
+                        <div class="font-medium text-white mb-1">あなたの回答</div>
+                        <div class="text-white leading-relaxed">
+                            ${text.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0 mt-1">
+                        👤
+                    </div>
+                </div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        // 入力フォーム表示
+        function showInputForm(step) {
+            hideAllForms();
+            
+            if (step.type === 'choice') {
+                showChoiceForm(step);
+            } else if (step.type === 'text') {
+                showTextForm(step);
+            }
+        }
+        
+        // 選択肢フォーム表示
+        function showChoiceForm(step) {
+            const choiceForm = document.getElementById('choice-form');
+            const choicesContainer = document.getElementById('choices-container');
+            const submitBtn = document.getElementById('choice-submit-btn');
+            
+            // 選択肢ボタン生成
+            choicesContainer.innerHTML = step.choices.map(choice => `
+                <button 
+                    class="choice-button p-4 rounded-xl text-left font-medium"
+                    data-choice-id="${choice.id}"
+                    onclick="selectChoice(${choice.id}, ${step.multiSelect || false})"
+                >
+                    ${choice.text}
+                </button>
+            `).join('');
+            
+            // 送信ボタンイベント
+            submitBtn.onclick = () => submitChoiceAnswer(step);
+            
+            choiceForm.classList.remove('hidden');
+            selectedChoice = step.multiSelect ? [] : null;
+        }
+        
+        // テキストフォーム表示
+        function showTextForm(step) {
+            const textForm = document.getElementById('text-form');
+            const textInput = document.getElementById('text-input');
+            const charCount = document.getElementById('char-count');
+            const submitBtn = document.getElementById('text-submit-btn');
+            
+            textInput.placeholder = step.placeholder || 'こちらに詳しくご記入ください...';
+            textInput.value = '';
+            
+            // 入力イベント
+            textInput.oninput = () => {
+                const length = textInput.value.trim().length;
+                charCount.textContent = length;
+                submitBtn.disabled = length === 0;
+            };
+            
+            // 送信ボタンイベント
+            submitBtn.onclick = () => submitTextAnswer(step);
+            
+            textForm.classList.remove('hidden');
+            textInput.focus();
+        }
+        
+        // 選択肢選択
+        function selectChoice(choiceId, multiSelect = false) {
+            const buttons = document.querySelectorAll('.choice-button');
+            const clickedButton = document.querySelector(`[data-choice-id="${choiceId}"]`);
+            
+            if (multiSelect) {
+                // 複数選択モード
+                if (!selectedChoice) selectedChoice = [];
+                
+                if (selectedChoice.includes(choiceId)) {
+                    // 選択解除
+                    selectedChoice = selectedChoice.filter(id => id !== choiceId);
+                    clickedButton.classList.remove('selected');
+                } else {
+                    // 選択追加
+                    selectedChoice.push(choiceId);
+                    clickedButton.classList.add('selected');
+                }
+            } else {
+                // 単一選択モード
+                buttons.forEach(btn => btn.classList.remove('selected'));
+                clickedButton.classList.add('selected');
+                selectedChoice = choiceId;
+            }
+            
+            // 送信ボタン有効化
+            const submitBtn = document.getElementById('choice-submit-btn');
+            const hasSelection = multiSelect ? 
+                (selectedChoice && selectedChoice.length > 0) : 
+                (selectedChoice !== null);
+            submitBtn.disabled = !hasSelection;
+        }
+        
+        // 選択肢回答送信
+        function submitChoiceAnswer(step) {
+            if (!selectedChoice || (Array.isArray(selectedChoice) && selectedChoice.length === 0)) {
+                return;
+            }
+            
+            setProcessing(true);
+            
+            // 回答テキスト生成
+            let answerText;
+            if (Array.isArray(selectedChoice)) {
+                answerText = selectedChoice.map(id => {
+                    const choice = step.choices.find(c => c.id === id);
+                    return choice ? choice.text : '';
+                }).join('\n');
+            } else {
+                const choice = step.choices.find(c => c.id === selectedChoice);
+                answerText = choice ? choice.text : '';
+            }
+            
+            // ユーザーメッセージ表示
+            addUserMessage(answerText);
+            
+            // 回答保存
+            window.alsokStorage.addScreeningResponse(
+                applicantId, 
+                step.id, 
+                step.question, 
+                answerText, 
+                'choice'
+            );
+            
+            // ステップ別処理
+            processStepResponse(step, selectedChoice);
+            
+            // 次のステップへ
+            currentStep++;
+            setTimeout(() => {
+                if (currentStep < screeningSteps.length) {
+                    showNextStep();
+                    setProcessing(false);
+                } else {
+                    completeScreening();
+                }
+            }, 2000);
+        }
+        
+        // テキスト回答送信
+        function submitTextAnswer(step) {
+            const textInput = document.getElementById('text-input');
+            const answer = textInput.value.trim();
+            
+            if (!answer) return;
+            
+            setProcessing(true);
+            
+            // ユーザーメッセージ表示
+            addUserMessage(answer);
+            
+            // 回答保存
+            window.alsokStorage.addScreeningResponse(
+                applicantId,
+                step.id,
+                step.question,
+                answer,
+                'text'
+            );
+            
+            // 次のステップへ
+            currentStep++;
+            setTimeout(() => {
+                completeScreening();
+            }, 2000);
+        }
+        
+        // ステップ別レスポンス処理
+        function processStepResponse(step, answer) {
+            switch (step.id) {
+                case 1: // 応募経路
+                    window.alsokStorage.setApplicationSource(applicantId, answer);
+                    break;
+                    
+                case 2: // 欠格事由チェック
+                    if (Array.isArray(answer)) {
+                        const reasons = answer.filter(id => id !== 6); // 6番以外は欠格事由
+                        disqualificationReasons = reasons;
+                        window.alsokStorage.setDisqualificationCheck(applicantId, reasons);
+                    }
+                    break;
+                    
+                case 3: // 勤務期間
+                case 4: // 体力面
+                    // 今後のスコアリングに使用
+                    break;
+            }
+        }
+        
+        // 事前精査完了
+        function completeScreening() {
+            // 完了メッセージ
+            let completionMessage;
+            let messageClass;
+            let nextAction;
+            
+            if (disqualificationReasons.length > 0) {
+                // 欠格事由あり
+                completionMessage = `${applicantData.name}さん、事前確認が完了いたしました。<br><br>` +
+                                  `誠に申し訳ございませんが、法的要件により今回は採用を見送らせていただくこととなりました。<br>` +
+                                  `貴重なお時間をいただき、ありがとうございました。`;
+                messageClass = 'disqualified-alert';
+                nextAction = 'disqualified';
+                
+                window.alsokStorage.setInterviewEligibility(applicantId, false, 0);
+            } else {
+                // 適格者
+                completionMessage = `${applicantData.name}さん、事前確認が完了いたしました。<br><br>` +
+                                  `次のステップとして、面接を実施させていただきます。<br>` +
+                                  `引き続き、面接官とお話しください。よろしくお願いいたします！`;
+                messageClass = 'qualified-alert';
+                nextAction = 'qualified';
+                
+                // 基本的なスコア計算（簡易版）
+                const score = calculateRecruitmentScore();
+                window.alsokStorage.setInterviewEligibility(applicantId, true, score);
+            }
+            
+            // 完了メッセージ表示
+            setTimeout(() => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `${messageClass} rounded-2xl p-4 mb-4 fade-in`;
+                
+                messageDiv.innerHTML = `
+                    <div class="flex items-start space-x-3">
+                        <div class="ai-avatar w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0 mt-1">
+                            👤
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-800 mb-1">ALSOK採用担当者</div>
+                            <div class="text-gray-700 leading-relaxed">
+                                ${completionMessage}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                chatContainer.appendChild(messageDiv);
+                scrollToBottom();
+            }, 1000);
+            
+            // ステータス更新
+            window.alsokStorage.updateApplicant(applicantId, {
+                status: nextAction === 'qualified' ? 'interview_started' : 'disqualified',
+                screeningCompletedAt: new Date().toISOString()
+            });
+            
+            screeningStatus.textContent = '事前精査完了';
+            setProcessing(false, nextAction);
+            
+            // 次画面へのリダイレクト
+            setTimeout(() => {
+                if (nextAction === 'qualified') {
+                    window.location.href = `/interview?id=${applicantId}`;
+                } else {
+                    window.location.href = `/completed?id=${applicantId}`;
+                }
+            }, 5000);
+        }
+        
+        // 採用可能性スコア計算（簡易版）
+        function calculateRecruitmentScore() {
+            let score = 50; // ベーススコア
+            
+            const responses = applicantData.screeningResponses || [];
+            
+            // 勤務期間による加点
+            const durationResponse = responses.find(r => r.step === 3);
+            if (durationResponse && durationResponse.answer.includes('1年以上')) {
+                score += 30;
+            } else if (durationResponse && durationResponse.answer.includes('半年〜1年')) {
+                score += 20;
+            }
+            
+            // 体力面による加点
+            const physicalResponse = responses.find(r => r.step === 4);
+            if (physicalResponse && physicalResponse.answer.includes('すべて対応可能')) {
+                score += 20;
+            }
+            
+            return Math.min(100, Math.max(0, score));
+        }
+        
+        // UI状態管理
+        function setProcessing(isProcessing, completionType = null) {
+            hideAllForms();
+            
+            if (isProcessing) {
+                document.getElementById('processing-state').classList.remove('hidden');
+            } else if (completionType) {
+                const completedState = document.getElementById('completed-state');
+                const completionMessage = document.getElementById('completion-message');
+                
+                if (completionType === 'qualified') {
+                    completionMessage.className = 'qualified-alert px-4 py-2 rounded-lg inline-block';
+                    completionMessage.textContent = '✅ 事前精査完了 - 面接実施決定';
+                } else {
+                    completionMessage.className = 'disqualified-alert px-4 py-2 rounded-lg inline-block';
+                    completionMessage.textContent = '⚠️ 事前精査完了 - 要件により見送り';
+                }
+                
+                completedState.classList.remove('hidden');
+            }
+        }
+        
+        // すべてのフォームを非表示
+        function hideAllForms() {
+            document.getElementById('choice-form').classList.add('hidden');
+            document.getElementById('text-form').classList.add('hidden');
+            document.getElementById('processing-state').classList.add('hidden');
+            document.getElementById('completed-state').classList.add('hidden');
+        }
+        
+        // チャット最下部へスクロール
+        function scrollToBottom() {
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 100);
+        }
+        
+        // ページ離脱確認
+        window.addEventListener('beforeunload', function(e) {
+            if (currentStep > 0 && currentStep < screeningSteps.length) {
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            }
+        });
+    </script>
+</body>
+</html>
