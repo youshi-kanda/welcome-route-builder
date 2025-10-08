@@ -661,8 +661,9 @@
             } else {
                 // 適格者
                 completionMessage = `${applicantData.name}さん、事前確認が完了いたしました。<br><br>` +
-                                  `次のステップとして、面接を実施させていただきます。<br>` +
-                                  `引き続き、面接官とお話しください。よろしくお願いいたします！`;
+                                  `すべての項目で基準を満たしており、面接対象者として選出いたします。<br>` +
+                                  `後日、面接日程についてご連絡させていただきます。<br>` +
+                                  `ありがとうございました！`;
                 messageClass = 'qualified-alert';
                 nextAction = 'qualified';
                 
@@ -696,7 +697,7 @@
             
             // ステータス更新
             window.alsokStorage.updateApplicant(applicantId, {
-                status: nextAction === 'qualified' ? 'interview_started' : 'disqualified',
+                status: nextAction === 'qualified' ? 'interview_completed' : 'disqualified',
                 screeningCompletedAt: new Date().toISOString()
             });
             
@@ -705,11 +706,8 @@
             
             // 次画面へのリダイレクト
             setTimeout(() => {
-                if (nextAction === 'qualified') {
-                    window.location.href = `/interview?id=${applicantId}`;
-                } else {
-                    window.location.href = `/completed?id=${applicantId}`;
-                }
+                // スクリーニング完了後は常に完了画面に遷移
+                window.location.href = `/completed?id=${applicantId}`;
             }, 5000);
         }
         
