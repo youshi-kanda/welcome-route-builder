@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>ALSOK採用面接 - 完了</title>
+    <title>ALSOK採用 - 事前確認完了</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .gradient-bg {
@@ -102,36 +102,36 @@
             <!-- メインメッセージ -->
             <div class="slide-up mb-8">
                 <h1 class="text-2xl font-bold text-gray-800 mb-2">
-                    面接完了！
+                    事前確認は以上で完了です！
                 </h1>
                 <p class="text-gray-600 text-lg mb-4">
-                    お疲れ様でした
+                    お疲れさまでした🙏
                 </p>
                 <p class="text-gray-500 leading-relaxed">
                     <span id="applicant-name">---</span>さん、<br>
-                    ALSOK採用面接にご参加いただき、<br>
+                    事前確認にご協力いただき、<br>
                     ありがとうございました。
                 </p>
             </div>
             
             <!-- 応募者情報カード -->
             <div class="info-card rounded-xl p-4 mb-6 text-left slide-up" style="animation-delay: 0.2s">
-                <h3 class="font-semibold text-gray-800 mb-3 text-center">📋 面接情報</h3>
+                <h3 class="font-semibold text-gray-800 mb-3 text-center">📋 事前確認情報</h3>
                 <div class="space-y-2 text-sm text-gray-700">
                     <div class="flex justify-between">
                         <span class="text-gray-600">応募者ID:</span>
                         <span id="applicant-id" class="font-mono">---</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-600">面接完了時刻:</span>
+                        <span class="text-gray-600">完了時刻:</span>
                         <span id="completion-time">---</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">回答数:</span>
-                        <span><span id="response-count">0</span>/5 問</span>
+                        <span><span id="response-count">0</span>/11 問</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-600">面接時間:</span>
+                        <span class="text-gray-600">所要時間:</span>
                         <span id="interview-duration">約 -- 分</span>
                     </div>
                 </div>
@@ -139,36 +139,36 @@
             
             <!-- 次のステップ案内 -->
             <div class="next-step rounded-xl p-4 mb-8 text-left slide-up" style="animation-delay: 0.4s">
-                <h3 class="font-semibold text-gray-800 mb-3 text-center">📮 今後の流れ</h3>
+                <h3 class="font-semibold text-gray-800 mb-3 text-center">【今後の流れ】</h3>
                 <div class="space-y-3 text-sm text-gray-700">
                     <div class="flex items-start space-x-3">
-                        <span class="text-lg">1️⃣</span>
+                        <span class="text-lg">📝</span>
                         <div>
-                            <div class="font-medium">書類審査</div>
-                            <div class="text-gray-600">面接内容を基に選考を行います</div>
+                            <div class="font-medium">採用担当者が内容を確認</div>
+                            <div class="text-gray-600">お答えいただいた内容を詳しく審査いたします</div>
                         </div>
                     </div>
                     <div class="flex items-start space-x-3">
-                        <span class="text-lg">2️⃣</span>
+                        <span class="text-lg">🤔</span>
                         <div>
-                            <div class="font-medium">結果通知</div>
-                            <div class="text-gray-600">1週間以内にお電話でご連絡</div>
+                            <div class="font-medium">面接実施の可否を判断</div>
+                            <div class="text-gray-600">応募要件に基づいて判断させていただきます</div>
                         </div>
                     </div>
                     <div class="flex items-start space-x-3">
-                        <span class="text-lg">3️⃣</span>
+                        <span class="text-lg">📞</span>
                         <div>
-                            <div class="font-medium">最終面接</div>
-                            <div class="text-gray-600">合格者のみ対面面接を実施</div>
+                            <div class="font-medium">24〜48時間以内に結果をご連絡</div>
+                            <div class="text-gray-600">面接の実施について、お電話でお知らせします</div>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- 連絡先確認 -->
+            <!-- 連絡先確認と準備事項 -->
             <div class="bg-blue-50 rounded-xl p-4 mb-6 text-left slide-up" style="animation-delay: 0.6s">
-                <h3 class="font-semibold text-gray-800 mb-2 text-center">📞 重要なお知らせ</h3>
-                <div class="text-sm text-gray-700 space-y-2">
+                <h3 class="font-semibold text-gray-800 mb-3 text-center">📞 お願いとご注意</h3>
+                <div class="text-sm text-gray-700 space-y-3">
                     <div class="flex items-center space-x-2">
                         <span>📱</span>
                         <div>
@@ -176,9 +176,18 @@
                             <span id="contact-phone">---</span>
                         </div>
                     </div>
-                    <div class="text-xs text-gray-600 mt-2">
-                        ⚠️ 上記番号に1週間以内にご連絡いたします。<br>
-                        電話に出られない場合は、後ほど改めてお電話いたします。
+                    <div class="text-xs text-gray-600">
+                        ⚠️ 上記番号に24〜48時間以内にご連絡いたします。<br>
+                        電話に出られない場合は留守番電話を残し、後ほど改めてお電話いたします。
+                    </div>
+                    <div class="border-t pt-3 mt-3">
+                        <div class="font-medium text-gray-800 mb-2">💼 面接が決定した場合の準備</div>
+                        <ul class="text-xs text-gray-600 space-y-1 list-disc list-inside">
+                            <li>履歴書・職務経歴書（写真添付）</li>
+                            <li>身分証明書（運転免許証等）</li>
+                            <li>印鑑</li>
+                            <li>筆記用具</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -186,12 +195,12 @@
             <!-- アクションボタン -->
             <div class="space-y-3 slide-up" style="animation-delay: 0.8s">
                 
-                <!-- 面接内容確認 -->
+                <!-- 事前確認内容確認 -->
                 <button 
                     id="review-answers"
                     class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-medium transition-colors"
                 >
-                    📝 回答内容を確認する
+                    📝 事前確認の回答内容を確認する
                 </button>
                 
                 <!-- 問い合わせ -->
@@ -215,7 +224,7 @@
             <div class="mt-8 pt-6 border-t border-gray-200 text-center slide-up" style="animation-delay: 1s">
                 <div class="text-xs text-gray-500 space-y-1">
                     <div>🛡️ ALSOK採用システム</div>
-                    <div>本日はありがとうございました</div>
+                    <div>事前確認へのご協力、ありがとうございました</div>
                 </div>
             </div>
         </div>
@@ -226,7 +235,7 @@
         <div class="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden">
             <div class="p-6 border-b">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold">📝 面接回答内容</h3>
+                    <h3 class="text-lg font-semibold">📝 事前確認回答内容</h3>
                     <button id="close-modal" class="text-gray-500 hover:text-gray-700">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -254,7 +263,7 @@
                             <div class="text-xs text-gray-500 mt-1">平日 9:00-18:00</div>
                         </div>
                         <div class="text-xs text-gray-600">
-                            面接に関するご質問やご不明な点がございましたら、<br>
+                            事前確認や採用に関するご質問やご不明な点がございましたら、<br>
                             上記までお気軽にお電話ください。
                         </div>
                     </div>
@@ -326,7 +335,7 @@
             const responseCount = applicantData.responses ? applicantData.responses.length : 0;
             document.getElementById('response-count').textContent = responseCount;
             
-            // 面接時間計算
+            // 事前確認時間計算
             if (applicantData.interviewStartedAt && applicantData.interviewCompletedAt) {
                 const startTime = new Date(applicantData.interviewStartedAt);
                 const endTime = new Date(applicantData.interviewCompletedAt);
