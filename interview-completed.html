@@ -82,6 +82,34 @@
             background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
             border-left: 4px solid #f59e0b;
         }
+        
+        .sheets-status {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+        }
+        
+        .sheets-status.connected {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .sheets-status.demo {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .sheets-status.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .sheets-status.sending {
+            background-color: #dbeafe;
+            color: #1d4ed8;
+            animation: pulse 2s infinite;
+        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen flex items-center justify-center p-4">
@@ -133,6 +161,10 @@
                     <div class="flex justify-between">
                         <span class="text-gray-600">所要時間:</span>
                         <span id="interview-duration">約 -- 分</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">スプレッドシート:</span>
+                        <span id="sheets-status">📋 準備中...</span>
                     </div>
                 </div>
             </div>
@@ -287,14 +319,19 @@
     <script src="shared-storage.js"></script>
     <!-- CSV出力ライブラリ -->
     <script src="csv-export.js"></script>
+    <!-- Google Sheets API統合 -->
+    <script src="google-sheets-config.js"></script>
+    <script src="google-sheets-api.js"></script>
     
     <script>
         let applicantId = null;
         let applicantData = null;
+        let sheetsInitialized = false;
         
         // 初期化
         document.addEventListener('DOMContentLoaded', function() {
             initializePage();
+            initializeGoogleSheetsIntegration();
         });
         
         // ページ初期化
@@ -322,6 +359,11 @@
             
             // イベントリスナー設定
             setupEventListeners();
+            
+            // Google Sheetsにデータ送信を試行
+            if (applicantData && !applicantData.sentToSheets) {
+                sendToGoogleSheets();
+            }
         }
         
         // 応募者情報表示
@@ -492,6 +534,139 @@
                 }, i * 100);
             }
         }
+        
+        // Google Sheets統合機能
+        async function initializeGoogleSheetsIntegration() {
+            try {
+                const result = await initializeGoogleSheets();
+                updateSheetsStatus(result);
+                sheetsInitialized = result.success || result.message?.includes('デモ');
+            } catch (error) {
+                console.error('Google Sheets初期化エラー:', error);
+                updateSheetsStatus({ success: false, message: ' 初期化エラー' });
+            }
+        }
+        
+        async function sendToGoogleSheets() {
+            if (!sheetsInitialized || !applicantData) {
+                console.log('Google Sheets未初期化またはデータなし');
+                return;
+            }
+            
+            // 送信状態を表示
+            const statusElement = document.getElementById('sheets-status');
+            if (statusElement) {
+                statusElement.innerHTML = '<span class="sheets-status sending">📤 送信中...</span>';
+            }
+            
+            try {
+                // 応募者データを Google Sheets 用にフォーマット
+                const sheetsData = formatDataForSheets(applicantData);
+                
+                const result = await submitToGoogleSheets(sheetsData);
+                
+                if (result.success) {
+                    // 送信成功をマーク
+                    applicantData.sentToSheets = true;
+                    applicantData.sheetsTimestamp = new Date().toISOString();
+                    if (result.sheetUrl) {
+                        applicantData.sheetsUrl = result.sheetUrl;
+                    }
+                    
+                    // ローカルストレージ更新
+                    window.alsokStorage.updateApplicant(applicantId, applicantData);
+                    
+                    // ステータス表示更新
+                    updateSheetsSuccessStatus(result);
+                    
+                    console.log('✅ Google Sheetsへの送信完了:', result);
+                } else {
+                    throw new Error(result.message || '送信失敗');
+                }
+            } catch (error) {
+                console.error('❌ Google Sheets送信エラー:', error);
+                updateSheetsErrorStatus(error.message);
+            }
+        }
+        
+        function formatDataForSheets(data) {
+            const responses = data.responses || [];
+            
+            // 11ステップの回答を取得
+            const stepAnswers = {};
+            responses.forEach(response => {
+                if (response.questionNumber) {
+                    stepAnswers[`step${response.questionNumber}_answer`] = response.answer;
+                }
+            });
+            
+            // Google Sheets用データ構造
+            return {
+                applicantName: data.name || '',
+                phoneNumber: data.phone || '',
+                applicationSource: data.source || 'モバイル応募',
+                step1_answer: stepAnswers.step1_answer || '',
+                step2_answer: stepAnswers.step2_answer || '',
+                step3_answer: stepAnswers.step3_answer || '',
+                step4_answer: stepAnswers.step4_answer || '',
+                step5_answer: stepAnswers.step5_answer || '',
+                step6_answer: stepAnswers.step6_answer || '',
+                step7_answer: stepAnswers.step7_answer || '',
+                step8_answer: stepAnswers.step8_answer || '',
+                step9_answer: stepAnswers.step9_answer || '',
+                step10_answer: stepAnswers.step10_answer || '',
+                step11_answer: stepAnswers.step11_answer || '',
+                disqualificationStatus: data.disqualificationStatus || '適格',
+                overallResult: data.overallResult || '面接実施予定',
+                completionTime: data.interviewCompletedAt ? 
+                    new Date(data.interviewCompletedAt).toLocaleString('ja-JP') : '',
+                sessionId: data.id || '',
+                ipAddress: data.ipAddress || '',
+                notes: '事前確認完了'
+            };
+        }
+        
+        function updateSheetsStatus(result) {
+            const statusElement = document.getElementById('sheets-status');
+            if (!statusElement) return;
+            
+            if (result.success) {
+                if (result.demo) {
+                    statusElement.innerHTML = '<span class="sheets-status demo">📋 デモモード</span>';
+                } else {
+                    statusElement.innerHTML = '<span class="sheets-status connected">📊 接続済み</span>';
+                }
+            } else {
+                statusElement.innerHTML = '<span class="sheets-status error">⚠️ 未設定</span>';
+            }
+        }
+        
+        function updateSheetsSuccessStatus(result) {
+            const statusElement = document.getElementById('sheets-status');
+            if (!statusElement) return;
+            
+            if (result.demo) {
+                statusElement.innerHTML = '<span class="sheets-status demo">📋 デモ保存完了</span>';
+            } else {
+                const sheetUrl = result.sheetUrl || '#';
+                statusElement.innerHTML = `<a href="${sheetUrl}" target="_blank" class="sheets-status connected hover:underline">✅ 送信完了</a>`;
+            }
+        }
+        
+        function updateSheetsErrorStatus(error) {
+            const statusElement = document.getElementById('sheets-status');
+            if (statusElement) {
+                statusElement.innerHTML = `<span class="sheets-status error" title="${error}">❌ 送信失敗</span>`;
+            }
+        }
+        
+        // Google Sheets接続状態監視
+        document.addEventListener('sheetsConnectionStatus', (event) => {
+            updateSheetsStatus({
+                success: event.detail.status === 'connected' || event.detail.status === 'demo_mode',
+                demo: event.detail.status === 'demo_mode'
+            });
+        });
         
         // ページ読み込み後に紙吹雪
         setTimeout(createConfetti, 1000);

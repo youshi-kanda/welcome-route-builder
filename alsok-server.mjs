@@ -46,6 +46,12 @@ const server = createServer(async (req, res) => {
     } else if (pathname === '/spreadsheet') {
       // スプレッドシートデモ画面
       filePath = join(__dirname, 'spreadsheet-demo.html');
+    } else if (pathname === '/sheets-demo') {
+      // Google Sheets統合デモ画面
+      filePath = join(__dirname, 'google-sheets-demo.html');
+    } else if (pathname === '/sheets-setup') {
+      // Google Sheets設定画面
+      filePath = join(__dirname, 'google-sheets-setup.html');
     } else if (pathname === '/shared-storage.js') {
       // 共有ストレージライブラリ
       filePath = join(__dirname, 'shared-storage.js');
@@ -55,6 +61,12 @@ const server = createServer(async (req, res) => {
     } else if (pathname === '/sample-data-generator.js') {
       // サンプルデータ生成ライブラリ
       filePath = join(__dirname, 'sample-data-generator.js');
+    } else if (pathname === '/google-sheets-config.js') {
+      // Google Sheets設定ライブラリ
+      filePath = join(__dirname, 'google-sheets-config.js');
+    } else if (pathname === '/google-sheets-api.js') {
+      // Google Sheets APIライブラリ
+      filePath = join(__dirname, 'google-sheets-api.js');
     } else if (pathname.startsWith('/dist/')) {
       // 静的ファイル（dist フォルダから）
       filePath = join(__dirname, pathname);
@@ -151,6 +163,8 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`   📱 応募者ホーム画面:        http://0.0.0.0:${PORT}/mobile`);
   console.log(`   🤖 AI面接システム:          http://0.0.0.0:${PORT}/interview?id=[応募者ID]`);
   console.log(`   ✅ 面接完了画面:            http://0.0.0.0:${PORT}/completed?id=[応募者ID]`);
+  console.log(`   📊 Google Sheets統合デモ:   http://0.0.0.0:${PORT}/sheets-demo`);
+  console.log(`   ⚙️  Google Sheets設定:       http://0.0.0.0:${PORT}/sheets-setup`);
   console.log(`\n🎯 デモ体験方法:`);
   console.log(`   1. 管理者画面でQRコードを確認`);
   console.log(`   2. スマートフォンでQRコードをスキャン`);
