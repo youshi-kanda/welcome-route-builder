@@ -4,7 +4,7 @@
  */
 
 // クライアント向けデモ用のGAS Web App URL
-window.CLIENT_DEMO_GAS_URL = 'https://script.google.com/macros/s/AKfycbyZchii9FU-zsSWw-oLrTNAUkAI4MU8sqlEInRyA0c5kpxvsYGbjf_TtWqNrQeaHXBv/exec';
+window.CLIENT_DEMO_GAS_URL = 'https://script.google.com/macros/s/AKfycbzzdlmsF-aBHpnJ4ObUj6lbFPaxWJjrRWuziUpKh8bzHa0HjLo4hOY6P0d4nZChbbWB/exec';
 
 // デモ用設定の自動適用
 document.addEventListener('DOMContentLoaded', function() {
