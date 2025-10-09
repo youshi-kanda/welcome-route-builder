@@ -9,7 +9,7 @@ window.CLIENT_DEMO_GAS_URL = 'https://script.google.com/macros/s/AKfycbyZchii9FU
 // デモ用設定の自動適用
 document.addEventListener('DOMContentLoaded', function() {
     // GAS連携を自動的に有効化
-    if (typeof initializeGASIntegration === 'function') {
+    if (typeof GASIntegration === 'function') {
         const gasIntegration = new GASIntegration({
             webAppUrl: window.CLIENT_DEMO_GAS_URL,
             enabled: true

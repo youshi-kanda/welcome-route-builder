@@ -369,7 +369,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializePage();
             initializeGoogleSheetsIntegration();
-            initializeGASIntegration();
+            setupGASIntegration();
         });
         
         // ページ初期化
@@ -712,7 +712,7 @@
         });
         
         // GAS連携機能
-        async function initializeGASIntegration() {
+        async function setupGASIntegration() {
             try {
                 // クライアントデモ用URLが設定されている場合は自動設定
                 const demoConfig = {};
