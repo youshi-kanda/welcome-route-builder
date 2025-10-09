@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Apps Script 連携設定 - ALSOK Interview System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        alsok: {
+                            blue: '#0066CC',
+                            red: '#E60012',
+                            gray: '#666666'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .setup-step {
+            transition: all 0.3s ease;
+        }
+        
+        .setup-step:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-connected { background-color: #10B981; }
+        .status-disconnected { background-color: #EF4444; }
+        .status-testing { 
+            background-color: #F59E0B; 
+            animation: pulse 2s infinite;
+        }
+        .status-sending { 
+            background-color: #3B82F6; 
+            animation: pulse 2s infinite;
+        }
+        
+        .code-block {
+            background-color: #1f2937;
+            color: #f9fafb;
+            font-family: 'Courier New', monospace;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        
+        .copy-button {
+            transition: all 0.2s ease;
+        }
+        
+        .copy-button:hover {
+            background-color: #059669;
+        }
+        
+        .step-number {
+            background: linear-gradient(135deg, #0066CC 0%, #0052A3 100%);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-2xl font-bold text-alsok-blue">Google Apps Script 連携設定</h1>
+                <div class="flex items-center">
+                    <span class="status-indicator" id="connectionStatusIndicator"></span>
+                    <span id="connectionStatusText" class="text-sm font-medium">未接続</span>
+                </div>
+            </div>
+            <p class="text-gray-600">ALSOK面接システムをGoogle Apps Script (GAS) 経由でスプレッドシートと連携させます。</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Setup Instructions -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">📋 セットアップ手順</h2>
+                
+                <div class="space-y-6">
+                    <!-- Step 1 -->
+                    <div class="setup-step">
+                        <div class="flex items-start space-x-4">
+                            <div class="step-number">1</div>
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-800 mb-2">Google Sheets でスプレッドシート作成</h3>
+                                <p class="text-sm text-gray-600 mb-3">新しいスプレッドシートを作成し、データ受信の準備をします</p>
+                                <a href="https://docs.google.com/spreadsheets/create" target="_blank" 
+                                   class="inline-flex items-center text-alsok-blue hover:text-alsok-red text-sm">
+                                    📊 新しいスプレッドシートを作成
+                                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="setup-step">
+                        <div class="flex items-start space-x-4">
+                            <div class="step-number">2</div>
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-800 mb-2">Apps Script エディタを開く</h3>
+                                <p class="text-sm text-gray-600 mb-3">スプレッドシートから「拡張機能」→「Apps Script」を選択</p>
+                                <div class="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
+                                    💡 Google Apps Script エディタが新しいタブで開きます
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="setup-step">
+                        <div class="flex items-start space-x-4">
+                            <div class="step-number">3</div>
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-800 mb-2">GAS コードをコピー&ペースト</h3>
+                                <p class="text-sm text-gray-600 mb-3">下記のGASコードを Apps Script エディタに貼り付けます</p>
+                                <button id="copyGASCodeBtn" class="copy-button bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm">
+                                    📋 GASコードをコピー
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="setup-step">
+                        <div class="flex items-start space-x-4">
+                            <div class="step-number">4</div>
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-800 mb-2">Web App としてデプロイ</h3>
+                                <p class="text-sm text-gray-600 mb-3">「デプロイ」→「新しいデプロイ」→「ウェブアプリ」として設定</p>
+                                <div class="text-xs text-gray-500 bg-gray-50 p-3 rounded">
+                                    <div class="font-medium mb-1">重要な設定:</div>
+                                    <div>• 次のユーザーとして実行: 自分</div>
+                                    <div>• アクセスできるユーザー: 全員</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5 -->
+                    <div class="setup-step">
+                        <div class="flex items-start space-x-4">
+                            <div class="step-number">5</div>
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-800 mb-2">Web App URL を取得</h3>
+                                <p class="text-sm text-gray-600 mb-3">デプロイ完了後に表示されるURLをコピーして、右側の設定欄に入力</p>
+                                <div class="text-xs text-green-600 bg-green-50 p-3 rounded">
+                                    ✅ URL形式: https://script.google.com/macros/s/[ID]/exec
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Form -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">⚙️ 連携設定</h2>
+                
+                <form id="gasConfigForm" class="space-y-6">
+                    <!-- Web App URL Input -->
+                    <div>
+                        <label for="webAppUrl" class="block text-sm font-medium text-gray-700 mb-2">
+                            Google Apps Script Web App URL *
+                        </label>
+                        <input 
+                            type="url" 
+                            id="webAppUrl" 
+                            name="webAppUrl"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-alsok-blue focus:border-alsok-blue"
+                            placeholder="https://script.google.com/macros/s/[ID]/exec"
+                            autocomplete="off"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">GAS デプロイ時に生成されるWeb App URLを入力してください</p>
+                    </div>
+
+                    <!-- Enable/Disable -->
+                    <div class="flex items-center">
+                        <input type="checkbox" id="enableGAS" name="enableGAS" checked class="mr-2">
+                        <label for="enableGAS" class="text-sm font-medium text-gray-700">
+                            GAS連携を有効にする
+                        </label>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="space-y-3">
+                        <button type="button" id="testConnectionBtn" class="w-full bg-alsok-blue hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                            🔌 接続テスト
+                        </button>
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                            💾 設定を保存
+                        </button>
+                        <button type="button" id="sendDemoDataBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition-colors" disabled>
+                            🚀 デモデータ送信
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Status Message -->
+                <div id="statusMessage" class="mt-4 p-3 rounded-md hidden">
+                    <div id="statusContent"></div>
+                </div>
+
+                <!-- Current Settings -->
+                <div id="currentSettings" class="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <h3 class="font-medium text-gray-800 mb-2">現在の設定</h3>
+                    <div class="text-sm text-gray-600 space-y-1">
+                        <div>Web App URL: <span id="currentUrl" class="font-mono">未設定</span></div>
+                        <div>連携状態: <span id="currentStatus">無効</span></div>
+                        <div>最終テスト: <span id="lastTest">未実施</span></div>
+                    </div>
+                    
+                    <div class="mt-3 pt-3 border-t border-gray-200">
+                        <button id="resetSettingsBtn" class="text-sm text-red-600 hover:text-red-800">
+                            🗑️ 設定をリセット
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAS Code Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800">📝 Google Apps Script コード</h2>
+                <button id="downloadGASCodeBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm">
+                    📁 ファイルダウンロード
+                </button>
+            </div>
+            <p class="text-gray-600 mb-4">以下のコードをGoogle Apps Scriptエディタにコピー&ペーストしてください：</p>
+            
+            <div class="relative">
+                <div class="code-block" id="gasCodeBlock">
+                    <!-- GASコードが動的に挿入されます -->
+                </div>
+                <button id="copyCodeBtn" class="absolute top-3 right-3 copy-button bg-green-600 text-white px-3 py-1 rounded text-xs">
+                    コピー
+                </button>
+            </div>
+        </div>
+
+        <!-- Demo Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">🧪 テスト・デモ機能</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="border rounded-lg p-4 text-center">
+                    <div class="text-2xl mb-2">🔌</div>
+                    <h3 class="font-medium text-gray-800 mb-2">接続テスト</h3>
+                    <p class="text-sm text-gray-600 mb-3">GAS Web Appとの接続を確認</p>
+                    <button id="quickTestBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm w-full">
+                        実行
+                    </button>
+                </div>
+                
+                <div class="border rounded-lg p-4 text-center">
+                    <div class="text-2xl mb-2">📤</div>
+                    <h3 class="font-medium text-gray-800 mb-2">単体データ送信</h3>
+                    <p class="text-sm text-gray-600 mb-3">1件のテストデータを送信</p>
+                    <button id="singleDataBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm w-full" disabled>
+                        実行
+                    </button>
+                </div>
+                
+                <div class="border rounded-lg p-4 text-center">
+                    <div class="text-2xl mb-2">📊</div>
+                    <h3 class="font-medium text-gray-800 mb-2">複数データ送信</h3>
+                    <p class="text-sm text-gray-600 mb-3">3件のデモデータを送信</p>
+                    <button id="batchDataBtn" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded text-sm w-full" disabled>
+                        実行
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back to Admin -->
+        <div class="mt-6 text-center space-x-4">
+            <a href="admin-dashboard.html" class="inline-flex items-center text-alsok-blue hover:text-alsok-red">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                管理画面に戻る
+            </a>
+            <span class="text-gray-400">|</span>
+            <a href="gas-demo.html" class="text-alsok-blue hover:text-alsok-red">
+                GASデモページ
+            </a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="gas-integration.js"></script>
+    <script>
+        // GAS Setup UI Controller
+        class GASSetupUI {
+            constructor() {
+                this.form = document.getElementById('gasConfigForm');
+                this.webAppUrlInput = document.getElementById('webAppUrl');
+                this.enableGASCheckbox = document.getElementById('enableGAS');
+                this.statusMessage = document.getElementById('statusMessage');
+                this.statusContent = document.getElementById('statusContent');
+                
+                this.initializeUI();
+                this.bindEvents();
+                this.loadCurrentSettings();
+                this.loadGASCode();
+            }
+
+            initializeUI() {
+                this.updateConnectionStatus('disconnected');
+            }
+
+            bindEvents() {
+                // Form submission
+                this.form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.saveSettings();
+                });
+
+                // Test connection
+                document.getElementById('testConnectionBtn').addEventListener('click', () => {
+                    this.testConnection();
+                });
+
+                // Demo data buttons
+                document.getElementById('sendDemoDataBtn').addEventListener('click', () => {
+                    this.sendDemoData();
+                });
+                
+                document.getElementById('quickTestBtn').addEventListener('click', () => {
+                    this.quickTest();
+                });
+                
+                document.getElementById('singleDataBtn').addEventListener('click', () => {
+                    this.sendSingleData();
+                });
+                
+                document.getElementById('batchDataBtn').addEventListener('click', () => {
+                    this.sendBatchData();
+                });
+
+                // Code copy buttons
+                document.getElementById('copyGASCodeBtn').addEventListener('click', () => {
+                    this.copyGASCode();
+                });
+                
+                document.getElementById('copyCodeBtn').addEventListener('click', () => {
+                    this.copyGASCode();
+                });
+                
+                document.getElementById('downloadGASCodeBtn').addEventListener('click', () => {
+                    this.downloadGASCode();
+                });
+
+                // Reset settings
+                document.getElementById('resetSettingsBtn').addEventListener('click', () => {
+                    this.resetSettings();
+                });
+
+                // Real-time validation
+                this.webAppUrlInput.addEventListener('input', () => {
+                    this.validateUrl();
+                });
+
+                // Connection status listener
+                document.addEventListener('gasConnectionStatus', (e) => {
+                    this.updateConnectionStatus(e.detail.status);
+                });
+            }
+
+            async loadCurrentSettings() {
+                const gasIntegration = initializeGASIntegration();
+                const status = gasIntegration.getStatus();
+                
+                if (status.url) {
+                    this.webAppUrlInput.value = localStorage.getItem('gas_web_app_url_full') || '';
+                    document.getElementById('currentUrl').textContent = status.url;
+                } else {
+                    document.getElementById('currentUrl').textContent = '未設定';
+                }
+                
+                this.enableGASCheckbox.checked = status.isEnabled;
+                document.getElementById('currentStatus').textContent = status.isEnabled ? '有効' : '無効';
+                
+                // Last test info
+                const lastTest = localStorage.getItem('gas_last_test');
+                if (lastTest) {
+                    const testDate = new Date(lastTest).toLocaleString('ja-JP');
+                    document.getElementById('lastTest').textContent = testDate;
+                }
+                
+                // Enable buttons if configured
+                if (status.hasUrl && status.isEnabled) {
+                    this.enableTestButtons();
+                }
+            }
+
+            async saveSettings() {
+                const webAppUrl = this.webAppUrlInput.value.trim();
+                const enabled = this.enableGASCheckbox.checked;
+                
+                // URL validation
+                if (enabled && webAppUrl) {
+                    const gasIntegration = initializeGASIntegration();
+                    const validation = gasIntegration.validateWebAppUrl(webAppUrl);
+                    
+                    if (!validation.isValid) {
+                        this.showStatus('error', validation.errors.join('<br>'));
+                        return;
+                    }
+                }
+                
+                // Save configuration
+                const gasIntegration = initializeGASIntegration();
+                const success = gasIntegration.saveConfiguration(webAppUrl, enabled);
+                
+                if (success) {
+                    // Store full URL separately for form display
+                    localStorage.setItem('gas_web_app_url_full', webAppUrl);
+                    
+                    this.showStatus('success', '✅ 設定を保存しました');
+                    this.loadCurrentSettings();
+                    
+                    if (enabled && webAppUrl) {
+                        this.enableTestButtons();
+                    }
+                } else {
+                    this.showStatus('error', '❌ 設定の保存に失敗しました');
+                }
+            }
+
+            async testConnection() {
+                this.updateConnectionStatus('testing');
+                this.showStatus('info', '🔌 接続テスト実行中...');
+                
+                try {
+                    const result = await testGASConnection();
+                    localStorage.setItem('gas_last_test', new Date().toISOString());
+                    
+                    if (result.success) {
+                        this.showStatus('success', '✅ ' + result.message);
+                        this.updateConnectionStatus('connected');
+                        this.enableTestButtons();
+                    } else {
+                        this.showStatus('error', '❌ ' + result.message);
+                        this.updateConnectionStatus('disconnected');
+                    }
+                } catch (error) {
+                    this.showStatus('error', '❌ 接続テストエラー: ' + error.message);
+                    this.updateConnectionStatus('disconnected');
+                }
+                
+                this.loadCurrentSettings();
+            }
+
+            async quickTest() {
+                this.showStatus('info', '🔌 クイックテスト実行中...');
+                await this.testConnection();
+            }
+
+            async sendSingleData() {
+                this.updateConnectionStatus('sending');
+                this.showStatus('info', '📤 テストデータ送信中...');
+                
+                try {
+                    const gasIntegration = initializeGASIntegration();
+                    const results = await gasIntegration.sendDemoData(1);
+                    
+                    if (results[0].success) {
+                        this.showStatus('success', '✅ テストデータ送信成功');
+                        this.updateConnectionStatus('connected');
+                    } else {
+                        this.showStatus('error', '❌ ' + results[0].message);
+                        this.updateConnectionStatus('error');
+                    }
+                } catch (error) {
+                    this.showStatus('error', '❌ 送信エラー: ' + error.message);
+                    this.updateConnectionStatus('error');
+                }
+            }
+
+            async sendBatchData() {
+                this.updateConnectionStatus('sending');
+                this.showStatus('info', '📊 複数データ送信中...');
+                
+                try {
+                    const gasIntegration = initializeGASIntegration();
+                    const results = await gasIntegration.sendDemoData(3);
+                    
+                    const successCount = results.filter(r => r.success).length;
+                    
+                    if (successCount === results.length) {
+                        this.showStatus('success', `✅ ${successCount}件のデータ送信成功`);
+                        this.updateConnectionStatus('connected');
+                    } else {
+                        this.showStatus('warning', `⚠️ ${successCount}/${results.length}件の送信成功`);
+                        this.updateConnectionStatus('connected');
+                    }
+                } catch (error) {
+                    this.showStatus('error', '❌ 送信エラー: ' + error.message);
+                    this.updateConnectionStatus('error');
+                }
+            }
+
+            async sendDemoData() {
+                await this.sendBatchData();
+            }
+
+            validateUrl() {
+                const url = this.webAppUrlInput.value.trim();
+                if (url && url !== '') {
+                    const gasIntegration = initializeGASIntegration();
+                    const validation = gasIntegration.validateWebAppUrl(url);
+                    
+                    if (!validation.isValid) {
+                        this.webAppUrlInput.setCustomValidity(validation.errors[0]);
+                    } else {
+                        this.webAppUrlInput.setCustomValidity('');
+                    }
+                }
+            }
+
+            enableTestButtons() {
+                document.getElementById('sendDemoDataBtn').disabled = false;
+                document.getElementById('singleDataBtn').disabled = false;
+                document.getElementById('batchDataBtn').disabled = false;
+            }
+
+            updateConnectionStatus(status) {
+                const indicator = document.getElementById('connectionStatusIndicator');
+                const text = document.getElementById('connectionStatusText');
+                
+                indicator.className = 'status-indicator';
+                
+                let statusText = '';
+                switch (status) {
+                    case 'connected':
+                        indicator.classList.add('status-connected');
+                        statusText = '接続済み';
+                        break;
+                    case 'testing':
+                    case 'sending':
+                        indicator.classList.add('status-testing');
+                        statusText = status === 'testing' ? 'テスト中...' : '送信中...';
+                        break;
+                    case 'error':
+                        indicator.classList.add('status-disconnected');
+                        statusText = 'エラー';
+                        break;
+                    default:
+                        indicator.classList.add('status-disconnected');
+                        statusText = '未接続';
+                }
+                
+                text.textContent = statusText;
+            }
+
+            showStatus(type, message) {
+                const typeClasses = {
+                    success: 'bg-green-50 text-green-800 border border-green-200',
+                    error: 'bg-red-50 text-red-800 border border-red-200',
+                    warning: 'bg-yellow-50 text-yellow-800 border border-yellow-200',
+                    info: 'bg-blue-50 text-blue-800 border border-blue-200'
+                };
+
+                this.statusMessage.className = `mt-4 p-3 rounded-md ${typeClasses[type] || typeClasses.info}`;
+                this.statusContent.innerHTML = message;
+                this.statusMessage.classList.remove('hidden');
+
+                if (type !== 'error') {
+                    setTimeout(() => {
+                        this.statusMessage.classList.add('hidden');
+                    }, 8000);
+                }
+            }
+
+            async loadGASCode() {
+                try {
+                    const response = await fetch('gas-script.js');
+                    const code = await response.text();
+                    
+                    const codeBlock = document.getElementById('gasCodeBlock');
+                    codeBlock.textContent = code;
+                } catch (error) {
+                    console.error('GASコード読み込みエラー:', error);
+                    document.getElementById('gasCodeBlock').textContent = 'コードの読み込みに失敗しました';
+                }
+            }
+
+            async copyGASCode() {
+                try {
+                    const response = await fetch('gas-script.js');
+                    const code = await response.text();
+                    
+                    await navigator.clipboard.writeText(code);
+                    this.showStatus('success', '📋 GASコードをクリップボードにコピーしました');
+                } catch (error) {
+                    this.showStatus('error', 'コピーに失敗しました');
+                }
+            }
+
+            async downloadGASCode() {
+                try {
+                    const response = await fetch('gas-script.js');
+                    const code = await response.text();
+                    
+                    const blob = new Blob([code], { type: 'text/javascript' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'alsok-gas-script.js';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    this.showStatus('success', '📁 GASコードファイルをダウンロードしました');
+                } catch (error) {
+                    this.showStatus('error', 'ダウンロードに失敗しました');
+                }
+            }
+
+            resetSettings() {
+                if (confirm('GAS連携設定をすべてリセットしますか？')) {
+                    const gasIntegration = initializeGASIntegration();
+                    gasIntegration.resetConfiguration();
+                    localStorage.removeItem('gas_web_app_url_full');
+                    localStorage.removeItem('gas_last_test');
+                    
+                    this.webAppUrlInput.value = '';
+                    this.enableGASCheckbox.checked = false;
+                    this.loadCurrentSettings();
+                    this.updateConnectionStatus('disconnected');
+                    
+                    this.showStatus('success', '🗑️ 設定をリセットしました');
+                }
+            }
+        }
+
+        // Initialize UI when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new GASSetupUI();
+        });
+    </script>
+</body>
+</html>
