@@ -1,0 +1,44 @@
+# Cloudflare Pages リダイレクト設定
+# ALSOK採用システム - クライアント向けデモ
+
+# ルートアクセス時は応募者画面（モバイル画面）にリダイレクト
+/  /mobile-home.html  200
+
+# 管理者ダッシュボード
+/admin  /admin-dashboard.html  200
+
+# 応募者ホーム画面
+/mobile  /mobile-home.html  200
+
+# 面接システム（パラメータ付き）
+/interview  /security-screening.html  200
+
+# 面接完了画面（パラメータ付き）
+/completed  /interview-completed.html  200
+
+# Google Sheets統合デモ
+/sheets-demo  /google-sheets-demo.html  200
+
+# Google Sheets設定
+/sheets-setup  /google-sheets-setup.html  200
+
+# Google Apps Script デモ
+/gas-demo  /gas-demo.html  200
+
+# Google Apps Script 設定
+/gas-setup  /gas-setup.html  200
+
+# スプレッドシートデモ
+/spreadsheet  /spreadsheet-demo.html  200
+
+# 静的ファイルのサービス（JS/CSS）
+/shared-storage.js  /shared-storage.js  200
+/csv-export.js  /csv-export.js  200
+/sample-data-generator.js  /sample-data-generator.js  200
+/google-sheets-config.js  /google-sheets-config.js  200
+/google-sheets-api.js  /google-sheets-api.js  200
+/gas-integration.js  /gas-integration.js  200
+/gas-script.js  /gas-script.js  200
+
+# 404エラーの場合は応募者画面にリダイレクト
+/*  /mobile-home.html  404

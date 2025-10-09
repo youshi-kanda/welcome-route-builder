@@ -1,24 +1,88 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ALSOK 一次面接 - 応募受付システム</title>
-    <meta name="description" content="ALSOK一次面接の応募受付・事前精査・面接予約をスムーズに行うシステム" />
-    <meta name="author" content="ALSOK" />
-
-    <meta property="og:title" content="ALSOK 一次面接 - 応募受付システム" />
-    <meta property="og:description" content="ALSOK一次面接の応募受付・事前精査・面接予約をスムーズに行うシステム" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
-
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALSOK採用システム - クライアントデモ</title>
+    <meta name="description" content="ALSOK採用システムのクライアント向けデモンストレーションシステム">
+    <meta name="author" content="ALSOK">
+    
+    <meta property="og:title" content="ALSOK採用システム - クライアントデモ">
+    <meta property="og:description" content="セキュリティ業界専用の採用システム - 応募受付から面接調整まで完全自動化">
+    <meta property="og:type" content="website">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%); 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+        }
+        .card { 
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); 
+        }
+    </style>
+    <script>
+        // 3秒後に自動的に応募者ホーム画面にリダイレクト
+        setTimeout(function() {
+            window.location.href = './mobile-home.html';
+        }, 3000);
+    </script>
+</head>
+<body>
+    <div class="bg-white rounded-3xl card p-8 text-center max-w-md mx-4">
+        <div class="mb-6">
+            <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-3xl text-white">🛡️</span>
+            </div>
+        </div>
+        
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">
+            ALSOK採用システム
+        </h1>
+        <p class="text-gray-600 mb-4">
+            クライアント向けデモ
+        </p>
+        <p class="text-gray-500 text-sm mb-6">
+            応募者ホーム画面に移動しています...<br>
+            <span id="countdown">3</span>秒後に自動移動
+        </p>
+        
+        <div class="space-y-3">
+            <a href="./mobile-home.html" class="block bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-medium transition-colors">
+                📱 応募者画面へ
+            </a>
+            <a href="./admin-dashboard.html" class="block bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-xl font-medium transition-colors">
+                🖥️ 管理画面へ
+            </a>
+            <a href="./gas-demo.html" class="block bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-medium transition-colors">
+                🧪 GAS連携デモ
+            </a>
+        </div>
+        
+        <div class="mt-6 text-xs text-gray-500">
+            Google Apps Script連携により<br>
+            リアルタイムスプレッドシート更新対応
+        </div>
+    </div>
+    
+    <script>
+        // カウントダウン表示
+        let countdown = 3;
+        const countdownElement = document.getElementById('countdown');
+        
+        const timer = setInterval(function() {
+            countdown--;
+            if (countdownElement) {
+                countdownElement.textContent = countdown;
+            }
+            
+            if (countdown <= 0) {
+                clearInterval(timer);
+            }
+        }, 1000);
+    </script>
+</body>
 </html>

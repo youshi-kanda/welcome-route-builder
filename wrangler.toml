@@ -1,18 +1,20 @@
-# Cloudflare Pages 設定
-name = "alsok-interview-frontend"
+# Cloudflare Pages Configuration
+# ALSOK Interview System - Client Demo
+
+name = "alsok-interview-demo"
 compatibility_date = "2023-12-01"
 
-# Pages 固有設定（オプション）
-[site]
-bucket = "dist"
+[env.production]
+# Cloudflare Pages環境変数（必要に応じて設定）
 
-# 環境変数（本番では Pages ダッシュボードで設定）
-[vars]
-VITE_DEFAULT_TZ = "Asia/Tokyo"
-VITE_APP_NAME = "ALSOK採用システム"
-VITE_APP_VERSION = "1.0.0"
+# Build Configuration
+# Cloudflare Pagesは静的サイトのため、特別なビルドコマンドは不要
+# すべてのHTML, CSS, JSファイルがそのままデプロイされます
 
-# カスタムドメイン設定例
-# [[routes]]
-# pattern = "alsok-interview.com/*"
-# zone_name = "alsok-interview.com"
+# 推奨設定:
+# Build command: (なし - 静的ファイル)
+# Build output directory: / (root)
+# Root directory: / (root)
+
+# Environment Variables (Cloudflare Pages Dashboard で設定)
+# CLIENT_DEMO_GAS_URL = "https://script.google.com/macros/s/AKfycbyZchii9FU-zsSWw-oLrTNAUkAI4MU8sqlEInRyA0c5kpxvsYGbjf_TtWqNrQeaHXBv/exec"

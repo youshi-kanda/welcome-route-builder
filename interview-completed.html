@@ -356,6 +356,11 @@
     <script src="google-sheets-api.js"></script>
     <!-- Google Apps Script連携 -->
     <script src="gas-integration.js"></script>
+    <!-- クライアントデモ用GAS設定 -->
+    <script>
+        // クライアント向けデモ用GAS URL
+        window.CLIENT_DEMO_GAS_URL = 'https://script.google.com/macros/s/AKfycbyZchii9FU-zsSWw-oLrTNAUkAI4MU8sqlEInRyA0c5kpxvsYGbjf_TtWqNrQeaHXBv/exec';
+    </script>
     
     <script>
         let applicantId = null;
@@ -712,7 +717,15 @@
         // GAS連携機能
         async function initializeGASIntegration() {
             try {
-                const gasIntegration = initializeGASIntegration();
+                // クライアントデモ用URLが設定されている場合は自動設定
+                const demoConfig = {};
+                if (window.CLIENT_DEMO_GAS_URL) {
+                    demoConfig.webAppUrl = window.CLIENT_DEMO_GAS_URL;
+                    demoConfig.enabled = true;
+                    console.log('🎯 クライアントデモ用GAS URLを設定:', window.CLIENT_DEMO_GAS_URL.substring(0, 50) + '...');
+                }
+                
+                const gasIntegration = initializeGASIntegration(demoConfig);
                 const status = gasIntegration.getStatus();
                 
                 updateGASStatus({
@@ -725,6 +738,20 @@
                 
                 if (gasInitialized) {
                     console.log('✅ GAS連携初期化完了');
+                    // クライアントデモ用の場合は接続テストを実行
+                    if (window.CLIENT_DEMO_GAS_URL) {
+                        console.log('🧪 クライアントデモ用GAS接続テストを実行中...');
+                        setTimeout(async () => {
+                            try {
+                                const testResult = await testGASConnection();
+                                if (testResult.success) {
+                                    console.log('✅ クライアントデモ用GAS接続確認完了');
+                                }
+                            } catch (error) {
+                                console.log('⚠️ GAS接続テストスキップ:', error.message);
+                            }
+                        }, 1000);
+                    }
                 } else {
                     console.log('⚠️ GAS連携未設定');
                 }

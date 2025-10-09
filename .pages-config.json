@@ -1,0 +1,81 @@
+{
+  "framework": {
+    "name": "static"
+  },
+  "build": {
+    "command": "",
+    "outputDirectory": ".",
+    "rootDirectory": "."
+  },
+  "deployment": {
+    "branch": "demo-system",
+    "environment": "production"
+  },
+  "functions": {
+    "directory": "_functions"
+  },
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/mobile-home.html",
+      "permanent": false
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin-dashboard.html",
+      "permanent": false
+    },
+    {
+      "source": "/mobile", 
+      "destination": "/mobile-home.html",
+      "permanent": false
+    },
+    {
+      "source": "/interview",
+      "destination": "/security-screening.html", 
+      "permanent": false
+    },
+    {
+      "source": "/completed",
+      "destination": "/interview-completed.html",
+      "permanent": false
+    },
+    {
+      "source": "/gas-demo",
+      "destination": "/gas-demo.html",
+      "permanent": false
+    },
+    {
+      "source": "/gas-setup", 
+      "destination": "/gas-setup.html",
+      "permanent": false
+    },
+    {
+      "source": "/sheets-demo",
+      "destination": "/google-sheets-demo.html",
+      "permanent": false
+    },
+    {
+      "source": "/sheets-setup",
+      "destination": "/google-sheets-setup.html", 
+      "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "**/*",
+      "headers": {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "X-XSS-Protection": "1; mode=block",
+        "Referrer-Policy": "strict-origin-when-cross-origin"
+      }
+    },
+    {
+      "source": "**/*.js",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    }
+  ]
+}
