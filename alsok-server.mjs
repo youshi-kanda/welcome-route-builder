@@ -43,9 +43,18 @@ const server = createServer(async (req, res) => {
     } else if (pathname === '/completed') {
       // 面接完了画面
       filePath = join(__dirname, 'interview-completed.html');
+    } else if (pathname === '/spreadsheet') {
+      // スプレッドシートデモ画面
+      filePath = join(__dirname, 'spreadsheet-demo.html');
     } else if (pathname === '/shared-storage.js') {
       // 共有ストレージライブラリ
       filePath = join(__dirname, 'shared-storage.js');
+    } else if (pathname === '/csv-export.js') {
+      // CSV出力ライブラリ
+      filePath = join(__dirname, 'csv-export.js');
+    } else if (pathname === '/sample-data-generator.js') {
+      // サンプルデータ生成ライブラリ
+      filePath = join(__dirname, 'sample-data-generator.js');
     } else if (pathname.startsWith('/dist/')) {
       // 静的ファイル（dist フォルダから）
       filePath = join(__dirname, pathname);

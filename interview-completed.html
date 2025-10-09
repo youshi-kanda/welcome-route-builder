@@ -211,10 +211,18 @@
                     📞 お問い合わせ先
                 </button>
                 
+                <!-- CSV出力機能 -->
+                <button 
+                    id="export-csv"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-medium transition-colors"
+                >
+                    📊 事前確認データをダウンロード
+                </button>
+                
                 <!-- デモ体験用（デモ時のみ表示） -->
                 <button 
                     id="demo-restart"
-                    class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-medium transition-colors"
+                    class="w-full bg-gray-400 hover:bg-gray-500 text-white py-3 px-6 rounded-xl font-medium transition-colors"
                 >
                     🔄 デモをもう一度体験する
                 </button>
@@ -277,6 +285,8 @@
 
     <!-- 共有ストレージライブラリ -->
     <script src="shared-storage.js"></script>
+    <!-- CSV出力ライブラリ -->
+    <script src="csv-export.js"></script>
     
     <script>
         let applicantId = null;
@@ -352,6 +362,9 @@
             // お問い合わせ
             document.getElementById('contact-info').addEventListener('click', showContactModal);
             
+            // CSV出力
+            document.getElementById('export-csv').addEventListener('click', exportCSV);
+            
             // デモ再開
             document.getElementById('demo-restart').addEventListener('click', restartDemo);
             
@@ -405,6 +418,41 @@
         // お問い合わせモーダル閉じる
         function closeContactModal() {
             document.getElementById('contact-modal').classList.add('hidden');
+        }
+        
+        // CSV出力
+        function exportCSV() {
+            if (window.alsokCSVExporter && applicantId) {
+                try {
+                    // 単一応募者のデータをCSV出力
+                    const success = window.alsokCSVExporter.exportSingleApplicant(applicantId);
+                    if (success) {
+                        // 出力成功のメッセージを表示
+                        showExportSuccessMessage();
+                    }
+                } catch (error) {
+                    console.error('CSV出力エラー:', error);
+                    alert('データの出力中にエラーが発生しました。\nしばらく経ってから再度お試しください。');
+                }
+            } else {
+                alert('出力機能の読み込みに問題があります。\nページを再読み込みしてください。');
+            }
+        }
+        
+        // 出力成功メッセージ表示
+        function showExportSuccessMessage() {
+            // 一時的な成功メッセージを表示
+            const button = document.getElementById('export-csv');
+            const originalText = button.textContent;
+            button.textContent = '✅ ダウンロード完了！';
+            button.style.backgroundColor = '#10b981';
+            button.disabled = true;
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.backgroundColor = '';
+                button.disabled = false;
+            }, 3000);
         }
         
         // デモ再開

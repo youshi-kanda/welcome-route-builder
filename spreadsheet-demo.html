@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALSOK採用データ管理 - スプレッドシートデモ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        }
+        
+        .csv-preview {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        
+        .csv-preview table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        .csv-preview th,
+        .csv-preview td {
+            border: 1px solid #d1d5db;
+            padding: 4px 8px;
+            text-align: left;
+            min-width: 100px;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .csv-preview th {
+            background-color: #f3f4f6;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .csv-preview .status-completed {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .csv-preview .legal-qualified {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .csv-preview .legal-warning {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-left: 4px solid #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    
+    <!-- ヘッダー -->
+    <header class="gradient-bg shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white p-2 rounded-lg">
+                        <span class="text-2xl">🛡️</span>
+                    </div>
+                    <div class="text-white">
+                        <h1 class="text-2xl font-bold">ALSOK採用データ管理</h1>
+                        <p class="text-blue-200">スプレッドシート連携デモ</p>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <button id="generate-sample" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium">
+                        📊 サンプルデータ生成
+                    </button>
+                    <button id="export-all" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium">
+                        📥 全データCSV出力
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container mx-auto px-4 py-8">
+        
+        <!-- 機能説明セクション -->
+        <div class="grid md:grid-cols-2 gap-6 mb-8">
+            <div class="feature-card rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">📋 データ管理機能</h3>
+                <ul class="space-y-2 text-sm text-gray-700">
+                    <li>• 11段階事前確認の完全記録</li>
+                    <li>• 応募経路別の統計管理</li>
+                    <li>• 警備業法欠格事由の自動チェック</li>
+                    <li>• CSV/Excel形式での一括出力</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">📊 スプレッドシート活用</h3>
+                <ul class="space-y-2 text-sm text-gray-700">
+                    <li>• Google Sheets連携対応</li>
+                    <li>• 採用担当者による評価記録</li>
+                    <li>• 条件付き書式による視覚化</li>
+                    <li>• リアルタイムでの共同編集</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 統計情報 -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">📈 応募者統計</h2>
+            <div id="stats-container" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <!-- 動的に生成 -->
+            </div>
+        </div>
+        
+        <!-- CSVプレビュー -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800">📄 スプレッドシートプレビュー</h2>
+                <div class="flex space-x-2">
+                    <button id="refresh-preview" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+                        🔄 更新
+                    </button>
+                    <button id="download-template" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm">
+                        📑 テンプレート
+                    </button>
+                </div>
+            </div>
+            
+            <div id="csv-preview-container" class="csv-preview bg-gray-50 rounded-lg p-4 max-h-96 overflow-auto">
+                <!-- CSVプレビューが動的に生成されます -->
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- 共有ライブラリ -->
+    <script src="shared-storage.js"></script>
+    <script src="csv-export.js"></script>
+    <script src="sample-data-generator.js"></script>
+    
+    <script>
+        // DOM要素
+        const statsContainer = document.getElementById('stats-container');
+        const csvPreviewContainer = document.getElementById('csv-preview-container');
+        
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+            setupEventListeners();
+        });
+        
+        // ページ初期化
+        function initializePage() {
+            updateStats();
+            updateCSVPreview();
+        }
+        
+        // イベントリスナー設定
+        function setupEventListeners() {
+            document.getElementById('generate-sample').addEventListener('click', generateSampleData);
+            document.getElementById('export-all').addEventListener('click', exportAllData);
+            document.getElementById('refresh-preview').addEventListener('click', updateCSVPreview);
+            document.getElementById('download-template').addEventListener('click', downloadTemplate);
+        }
+        
+        // 統計情報更新
+        function updateStats() {
+            const applicants = window.alsokStorage.getAllApplicants();
+            const completed = applicants.filter(a => a.screeningResponses && a.screeningResponses.length > 0);
+            const qualified = completed.filter(a => a.isQualified);
+            const sources = {};
+            
+            completed.forEach(applicant => {
+                const sourceMapping = {
+                    1: 'お電話', 2: 'Indeed', 3: 'ハローワーク', 4: 'ホームページ',
+                    5: 'SNS', 6: '求人誌', 7: '紹介', 8: 'その他'
+                };
+                const source = sourceMapping[applicant.applicationSource] || 'その他';
+                sources[source] = (sources[source] || 0) + 1;
+            });
+            
+            // 統計カード生成
+            const stats = [
+                { label: '総応募者数', value: applicants.length, color: 'blue' },
+                { label: '事前確認完了', value: completed.length, color: 'green' },
+                { label: '法的要件適格', value: qualified.length, color: 'purple' },
+                { label: '完了率', value: applicants.length > 0 ? Math.round((completed.length / applicants.length) * 100) + '%' : '0%', color: 'yellow' }
+            ];
+            
+            statsContainer.innerHTML = stats.map(stat => `
+                <div class="bg-${stat.color}-50 rounded-lg p-4 text-center">
+                    <div class="text-2xl font-bold text-${stat.color}-600">${stat.value}</div>
+                    <div class="text-sm text-${stat.color}-800">${stat.label}</div>
+                </div>
+            `).join('');
+        }
+        
+        // CSVプレビュー更新
+        function updateCSVPreview() {
+            const applicants = window.alsokStorage.getAllApplicants();
+            const completedApplicants = applicants.filter(a => 
+                a.screeningResponses && a.screeningResponses.length > 0
+            );
+            
+            if (completedApplicants.length === 0) {
+                csvPreviewContainer.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <div class="text-4xl mb-4">📋</div>
+                        <div>事前確認を完了した応募者がいません</div>
+                        <button onclick="generateSampleData()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg">
+                            サンプルデータを生成
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            // CSVデータ生成
+            const csvRows = [];
+            const headers = window.alsokCSVExporter.csvHeaders;
+            csvRows.push(headers);
+            
+            completedApplicants.forEach(applicant => {
+                csvRows.push(window.alsokCSVExporter.convertApplicantToCSVRow(applicant));
+            });
+            
+            // テーブル生成
+            const tableHTML = `
+                <table>
+                    <thead>
+                        <tr>${headers.map(header => `<th>${header}</th>`).join('')}</tr>
+                    </thead>
+                    <tbody>
+                        ${csvRows.slice(1).map(row => `
+                            <tr>
+                                ${row.map((cell, index) => {
+                                    let classes = '';
+                                    if (headers[index] === 'ステータス' && cell === '事前確認完了') {
+                                        classes = 'status-completed';
+                                    }
+                                    if (headers[index] === '法的適格性') {
+                                        if (cell === '適格') {
+                                            classes = 'legal-qualified';
+                                        } else if (cell.includes('要注意')) {
+                                            classes = 'legal-warning';
+                                        }
+                                    }
+                                    return `<td class="${classes}" title="${cell}">${cell || '-'}</td>`;
+                                }).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            csvPreviewContainer.innerHTML = tableHTML;
+        }
+        
+        // サンプルデータ生成
+        function generateSampleData() {
+            const count = 5;
+            const samples = window.alsokSampleGenerator.addSampleDataToStorage(count);
+            
+            // 成功メッセージ
+            const button = document.getElementById('generate-sample');
+            const originalText = button.textContent;
+            button.textContent = `✅ ${count}件生成完了！`;
+            button.disabled = true;
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.disabled = false;
+                updateStats();
+                updateCSVPreview();
+            }, 2000);
+        }
+        
+        // 全データエクスポート
+        function exportAllData() {
+            const success = window.alsokCSVExporter.exportAllApplicants();
+            if (success) {
+                const button = document.getElementById('export-all');
+                const originalText = button.textContent;
+                button.textContent = '✅ ダウンロード完了！';
+                button.disabled = true;
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }, 3000);
+            }
+        }
+        
+        // テンプレートダウンロード
+        function downloadTemplate() {
+            const templateContent = `応募者ID,氏名,電話番号,応募経路,登録日時,事前確認開始,事前確認完了,所要時間（分）,ステータス,法的適格性,Q1_応募経路詳細,Q2_欠格事由チェック,Q3_勤務期間希望,Q4_体力業務対応,Q5_意気込み・アピール,Q6_警備業務知識,Q7_責任についての考え,Q8_研修・資格意欲,Q9_重視する点,Q9_その他詳細,Q10_他社検討状況,Q11_面接準備・質問,採用担当者メモ,面接実施判定,判定理由,次回アクション,更新日時\\r\\n`;
+            
+            const bom = '\\uFEFF';
+            const blob = new Blob([bom + templateContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'ALSOK採用管理テンプレート.csv');
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            URL.revokeObjectURL(url);
+        }
+        
+        // データ更新イベントリスナー
+        window.alsokStorage.onUpdate(() => {
+            updateStats();
+            updateCSVPreview();
+        });
+    </script>
+</body>
+</html>
