@@ -71,31 +71,146 @@
             font-family: 'Courier New', monospace;
             font-size: 11px;
             overflow-x: auto;
+            overflow-y: auto;
             white-space: nowrap;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: #ffffff;
+            /* スクロールバーのスタイリング */
+            scrollbar-width: thin;
+            scrollbar-color: #9ca3af #f3f4f6;
+        }
+        
+        .csv-preview::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        
+        .csv-preview::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 4px;
+        }
+        
+        .csv-preview::-webkit-scrollbar-thumb {
+            background: #9ca3af;
+            border-radius: 4px;
+        }
+        
+        .csv-preview::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
         }
         
         .csv-preview table {
             border-collapse: collapse;
-            width: 100%;
+            min-width: max-content; /* テーブルが内容に応じて幅を持つ */
+            width: auto; /* 100%から変更 */
         }
         
         .csv-preview th,
         .csv-preview td {
             border: 1px solid #d1d5db;
-            padding: 4px 8px;
+            padding: 6px 10px; /* パディングを増加 */
             text-align: left;
+            white-space: nowrap; /* テキストの改行を防ぐ */
+            vertical-align: top;
+        }
+        
+        /* 列ごとの最適な幅設定 */
+        .csv-preview th:nth-child(1), /* 応募者ID */
+        .csv-preview td:nth-child(1) {
+            min-width: 120px;
+            width: 120px;
+        }
+        
+        .csv-preview th:nth-child(2), /* 氏名 */
+        .csv-preview td:nth-child(2) {
+            min-width: 100px;
+            width: 100px;
+            font-weight: 500;
+        }
+        
+        .csv-preview th:nth-child(3), /* 電話番号 */
+        .csv-preview td:nth-child(3) {
+            min-width: 120px;
+            width: 120px;
+        }
+        
+        .csv-preview th:nth-child(4), /* 応募経路 */
+        .csv-preview td:nth-child(4) {
+            min-width: 150px;
+            width: 150px;
+        }
+        
+        .csv-preview th:nth-child(5), /* 登録日時 */
+        .csv-preview th:nth-child(6), /* 事前確認開始 */
+        .csv-preview th:nth-child(7), /* 事前確認完了 */
+        .csv-preview td:nth-child(5),
+        .csv-preview td:nth-child(6),
+        .csv-preview td:nth-child(7) {
+            min-width: 140px;
+            width: 140px;
+        }
+        
+        .csv-preview th:nth-child(8), /* 所要時間 */
+        .csv-preview td:nth-child(8) {
             min-width: 80px;
-            max-width: 150px;
+            width: 80px;
+            text-align: center;
+        }
+        
+        .csv-preview th:nth-child(9), /* ステータス */
+        .csv-preview td:nth-child(9) {
+            min-width: 120px;
+            width: 120px;
+        }
+        
+        .csv-preview th:nth-child(10), /* 法的適格性 */
+        .csv-preview td:nth-child(10) {
+            min-width: 100px;
+            width: 100px;
+        }
+        
+        /* Q1-Q11の回答列 */
+        .csv-preview th:nth-child(n+11):nth-child(-n+21),
+        .csv-preview td:nth-child(n+11):nth-child(-n+21) {
+            min-width: 200px;
+            width: 200px;
+            max-width: 300px;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         
+        /* 管理用列 */
+        .csv-preview th:nth-child(n+22),
+        .csv-preview td:nth-child(n+22) {
+            min-width: 150px;
+            width: 150px;
+        }
+        
         .csv-preview th {
-            background-color: #f3f4f6;
+            background-color: #f9fafb;
             font-weight: bold;
             position: sticky;
             top: 0;
-            z-index: 10;
+            z-index: 20;
+            border-bottom: 2px solid #4f46e5;
+            color: #374151;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        /* 重要列のハイライト */
+        .csv-preview th:nth-child(1),
+        .csv-preview th:nth-child(2),
+        .csv-preview th:nth-child(9),
+        .csv-preview th:nth-child(10) {
+            background-color: #eff6ff;
+            border-bottom-color: #2563eb;
+        }
+        
+        .csv-preview tbody tr:hover {
+            background-color: #f8fafc;
         }
         
         .csv-preview .status-completed {
@@ -441,16 +556,21 @@
                 <div class="bg-white rounded-xl shadow-lg p-6">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="text-lg font-bold text-gray-800">📄 データプレビュー</h3>
-                        <div class="flex space-x-2">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="hidden md:block text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                    💡 Shift + マウスホイールで横スクロール
+                                </div>
+                                <span id="preview-count" class="text-sm text-gray-600 px-3 py-1 bg-blue-50 rounded">
+                                    0件のデータ
+                                </span>
+                            </div>
                             <button 
                                 id="refresh-csv-preview" 
                                 class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
                             >
                                 🔄 更新
                             </button>
-                            <span id="preview-count" class="text-sm text-gray-600 px-3 py-1">
-                                0件のデータ
-                            </span>
                         </div>
                     </div>
                     
@@ -932,8 +1052,8 @@
                 return;
             }
             
-            // CSVデータ生成（最初の3行のみプレビュー）
-            const previewApplicants = completedApplicants.slice(0, 3);
+            // CSVデータ生成（全データ表示、最初の5行）
+            const previewApplicants = completedApplicants.slice(0, 5);
             const csvRows = [];
             const headers = window.alsokCSVExporter.csvHeaders;
             csvRows.push(headers);
@@ -942,36 +1062,61 @@
                 csvRows.push(window.alsokCSVExporter.convertApplicantToCSVRow(applicant));
             });
             
-            // テーブル生成
+            // テーブル生成（全列表示）
             const tableHTML = `
+                <div class="mb-4 flex items-center justify-between">
+                    <div class="text-sm text-gray-600">
+                        📊 全${headers.length}列のデータを表示中
+                    </div>
+                    <div class="text-xs text-blue-600">
+                        💡 横スクロールで全データが確認できます
+                    </div>
+                </div>
                 <table>
                     <thead>
-                        <tr>${headers.slice(0, 8).map(header => `<th>${header}</th>`).join('')}</tr>
+                        <tr>${headers.map((header, index) => `
+                            <th title="${header}">
+                                ${header}
+                            </th>
+                        `).join('')}</tr>
                     </thead>
                     <tbody>
                         ${csvRows.slice(1).map(row => `
                             <tr>
-                                ${row.slice(0, 8).map((cell, index) => {
+                                ${row.map((cell, index) => {
+                                    const header = headers[index];
                                     let classes = '';
-                                    if (headers[index] === 'ステータス' && cell === '事前確認完了') {
-                                        classes = 'status-completed';
+                                    
+                                    // 条件付きスタイリング
+                                    if (header === 'ステータス' && cell === '事前確認完了') {
+                                        classes += 'status-completed';
                                     }
-                                    if (headers[index] === '法的適格性') {
+                                    if (header === '法的適格性') {
                                         if (cell === '適格') {
-                                            classes = 'legal-qualified';
+                                            classes += 'legal-qualified';
                                         } else if (cell && cell.includes('要注意')) {
-                                            classes = 'legal-warning';
+                                            classes += 'legal-warning';
                                         }
                                     }
-                                    return `<td class="${classes}" title="${cell}">${cell || '-'}</td>`;
+                                    
+                                    // セルの内容が長い場合のツールチップ
+                                    const displayCell = cell || '-';
+                                    const cellTitle = displayCell.length > 50 ? displayCell : '';
+                                    
+                                    return `<td class="${classes}" title="${cellTitle}">${displayCell}</td>`;
                                 }).join('')}
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
-                ${completedApplicants.length > 3 ? `
-                    <div class="text-center mt-4 text-sm text-gray-600">
-                        ... 他 ${completedApplicants.length - 3} 件のデータがあります
+                ${completedApplicants.length > 5 ? `
+                    <div class="text-center mt-4 p-3 bg-blue-50 rounded-lg">
+                        <div class="text-sm text-blue-700 font-medium">
+                            📋 表示: ${previewApplicants.length}件 / 全${completedApplicants.length}件
+                        </div>
+                        <div class="text-xs text-blue-600 mt-1">
+                            すべてのデータを確認するにはCSV出力をご利用ください
+                        </div>
                     </div>
                 ` : ''}
             `;
@@ -985,6 +1130,9 @@
             if (document.getElementById('export-all-csv').hasAttribute('data-event-set')) {
                 return;
             }
+            
+            // CSVプレビュー用の横スクロール改善機能を追加
+            setupCSVPreviewEnhancements();
             
             // CSV出力
             document.getElementById('export-all-csv').addEventListener('click', function() {
@@ -1068,6 +1216,98 @@
                     updateDashboard(); // メイン統計も更新
                 }, 500);
             }
+        }
+        
+        // CSVプレビュー改善機能
+        function setupCSVPreviewEnhancements() {
+            const previewContainer = document.getElementById('csv-preview-data');
+            
+            // Shift + マウスホイールによる横スクロール
+            previewContainer.addEventListener('wheel', function(e) {
+                if (e.shiftKey) {
+                    e.preventDefault();
+                    this.scrollLeft += e.deltaY;
+                }
+            });
+            
+            // タッチデバイス用のスワイプサポート
+            let isScrolling = false;
+            let startX = 0;
+            
+            previewContainer.addEventListener('touchstart', function(e) {
+                startX = e.touches[0].pageX;
+                isScrolling = false;
+            });
+            
+            previewContainer.addEventListener('touchmove', function(e) {
+                if (!isScrolling) {
+                    const currentX = e.touches[0].pageX;
+                    const diffX = startX - currentX;
+                    
+                    if (Math.abs(diffX) > 10) { // 10px以上の移動で横スクロール開始
+                        isScrolling = true;
+                        this.scrollLeft += diffX * 2; // スクロール感度調整
+                        startX = currentX;
+                        e.preventDefault();
+                    }
+                }
+            });
+            
+            // スクロール位置インジケーター
+            previewContainer.addEventListener('scroll', function() {
+                showScrollIndicator(this);
+            });
+        }
+        
+        // スクロール位置インジケーター表示
+        function showScrollIndicator(container) {
+            // 既存のインジケーターを削除
+            const existingIndicator = container.querySelector('.scroll-indicator');
+            if (existingIndicator) {
+                existingIndicator.remove();
+            }
+            
+            // スクロール可能かチェック
+            if (container.scrollWidth <= container.clientWidth) {
+                return; // スクロールの必要がない場合は表示しない
+            }
+            
+            // インジケーター作成
+            const indicator = document.createElement('div');
+            indicator.className = 'scroll-indicator';
+            indicator.style.cssText = `
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: rgba(59, 130, 246, 0.9);
+                color: white;
+                padding: 4px 8px;
+                border-radius: 12px;
+                font-size: 10px;
+                pointer-events: none;
+                z-index: 30;
+                transition: opacity 0.3s ease;
+            `;
+            
+            // スクロール位置計算
+            const scrollPercentage = Math.round((container.scrollLeft / (container.scrollWidth - container.clientWidth)) * 100);
+            indicator.textContent = `${scrollPercentage}% →`;
+            
+            // 相対positioned親要素に追加
+            container.style.position = 'relative';
+            container.appendChild(indicator);
+            
+            // 2秒後に自動消去
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.style.opacity = '0';
+                    setTimeout(() => {
+                        if (indicator.parentNode) {
+                            indicator.remove();
+                        }
+                    }, 300);
+                }
+            }, 2000);
         }
         
         // クリーンアップ
