@@ -475,12 +475,16 @@
         
         // 次のステップを表示
         function showNextStep() {
-            if (currentStep >= screeningSteps.length) {
+            console.log(`showNextStep: currentStep=${currentStep}, totalSteps=${screeningSteps.length}`);
+            
+            if (currentStep >= 11) { // 明示的に11ステップ指定
+                console.log('スクリーニング完了');
                 completeScreening();
                 return;
             }
             
             const step = screeningSteps[currentStep];
+            console.log(`Next step: ${step.id} - ${step.question}`);
             
             // UI更新
             stepCounter.textContent = `${step.id}/11`;
@@ -709,7 +713,7 @@
             // 次のステップへ
             currentStep++;
             setTimeout(() => {
-                if (currentStep < screeningSteps.length) {
+                if (currentStep < 11) { // 明示的に11ステップ指定
                     showNextStep();
                     setProcessing(false);
                 } else {
@@ -742,7 +746,12 @@
             // 次のステップへ
             currentStep++;
             setTimeout(() => {
-                completeScreening();
+                if (currentStep < 11) { // 明示的に11ステップ指定
+                    showNextStep();
+                    setProcessing(false);
+                } else {
+                    completeScreening();
+                }
             }, 2000);
         }
         
