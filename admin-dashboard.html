@@ -41,6 +41,77 @@
             align-items: center;
             min-height: 240px;
         }
+        
+        /* タブスタイル */
+        .tab-button {
+            border-bottom-color: transparent;
+            color: #6b7280;
+        }
+        
+        .tab-button:hover {
+            color: #374151;
+            border-bottom-color: #d1d5db;
+        }
+        
+        .tab-button.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* データ管理専用スタイル */
+        .csv-preview {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        
+        .csv-preview table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        .csv-preview th,
+        .csv-preview td {
+            border: 1px solid #d1d5db;
+            padding: 4px 8px;
+            text-align: left;
+            min-width: 80px;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .csv-preview th {
+            background-color: #f3f4f6;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .csv-preview .status-completed {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .csv-preview .legal-qualified {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .csv-preview .legal-warning {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -68,8 +139,46 @@
         </div>
     </header>
 
+    <!-- タブナビゲーション -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-6">
+            <nav class="flex space-x-8">
+                <button 
+                    id="tab-dashboard" 
+                    class="tab-button active py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors"
+                    onclick="switchTab('dashboard')"
+                >
+                    📱 応募者管理
+                </button>
+                <button 
+                    id="tab-data-management" 
+                    class="tab-button py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors"
+                    onclick="switchTab('data-management')"
+                >
+                    📊 データ管理
+                </button>
+                <button 
+                    id="tab-statistics" 
+                    class="tab-button py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors"
+                    onclick="switchTab('statistics')"
+                >
+                    📈 詳細統計
+                </button>
+                <button 
+                    id="tab-settings" 
+                    class="tab-button py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors"
+                    onclick="switchTab('settings')"
+                >
+                    ⚙️ システム設定
+                </button>
+            </nav>
+        </div>
+    </div>
+
     <div class="container mx-auto px-6 py-8">
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <!-- 応募者管理タブ -->
+        <div id="content-dashboard" class="tab-content active">
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
             
             <!-- 左カラム: 統計とQRコード -->
             <div class="xl:col-span-1 space-y-8">
@@ -164,10 +273,19 @@
                                 0人
                             </span>
                         </h3>
-                        <div class="text-sm text-gray-600">
-                            <span id="active-interviews" class="text-orange-600 font-medium">面接中: 0人</span>
-                            <span class="mx-2">|</span>
-                            <span id="completed-interviews" class="text-green-600 font-medium">完了: 0人</span>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-sm text-gray-600">
+                                <span id="active-interviews" class="text-orange-600 font-medium">面接中: 0人</span>
+                                <span class="mx-2">|</span>
+                                <span id="completed-interviews" class="text-green-600 font-medium">完了: 0人</span>
+                            </div>
+                            <button 
+                                id="export-applicants-csv" 
+                                class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                                title="応募者データをCSV出力"
+                            >
+                                📊 CSV出力
+                            </button>
                         </div>
                     </div>
                     
@@ -207,10 +325,171 @@
                 </div>
             </div>
         </div>
+        </div>
+
+        <!-- データ管理タブ -->
+        <div id="content-data-management" class="tab-content">
+            <div class="space-y-8">
+                
+                <!-- データ管理統計 -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">事前確認完了</p>
+                                <p class="text-2xl font-bold text-green-600" id="data-stat-completed">0</p>
+                            </div>
+                            <div class="text-3xl">📋</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">法的適格者</p>
+                                <p class="text-2xl font-bold text-blue-600" id="data-stat-qualified">0</p>
+                            </div>
+                            <div class="text-3xl">⚖️</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">完了率</p>
+                                <p class="text-2xl font-bold text-purple-600" id="data-stat-rate">0%</p>
+                            </div>
+                            <div class="text-3xl">📊</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">平均所要時間</p>
+                                <p class="text-2xl font-bold text-orange-600" id="data-stat-duration">0分</p>
+                            </div>
+                            <div class="text-3xl">⏱️</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CSV出力・管理セクション -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <!-- CSV出力管理 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center">
+                            📥 データ出力管理
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div class="p-4 bg-blue-50 rounded-lg">
+                                <h4 class="font-medium text-blue-900 mb-2">📊 CSV一括出力</h4>
+                                <p class="text-sm text-blue-700 mb-3">
+                                    すべての事前確認データをスプレッドシート形式で出力
+                                </p>
+                                <button 
+                                    id="export-all-csv" 
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
+                                >
+                                    📥 全データCSV出力
+                                </button>
+                            </div>
+                            
+                            <div class="p-4 bg-green-50 rounded-lg">
+                                <h4 class="font-medium text-green-900 mb-2">📑 テンプレート管理</h4>
+                                <p class="text-sm text-green-700 mb-3">
+                                    Google Sheets用の空白テンプレートをダウンロード
+                                </p>
+                                <button 
+                                    id="download-template-csv" 
+                                    class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors"
+                                >
+                                    📑 テンプレートダウンロード
+                                </button>
+                            </div>
+                            
+                            <div class="p-4 bg-purple-50 rounded-lg">
+                                <h4 class="font-medium text-purple-900 mb-2">🎲 サンプルデータ</h4>
+                                <p class="text-sm text-purple-700 mb-3">
+                                    テスト・デモ用のサンプルデータを生成
+                                </p>
+                                <button 
+                                    id="generate-sample-csv" 
+                                    class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition-colors"
+                                >
+                                    🎲 サンプルデータ生成
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 応募経路分析 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center">
+                            📈 応募経路分析
+                        </h3>
+                        
+                        <div id="application-sources-chart" class="space-y-3">
+                            <!-- 動的に生成 -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CSVプレビュー -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-bold text-gray-800">📄 データプレビュー</h3>
+                        <div class="flex space-x-2">
+                            <button 
+                                id="refresh-csv-preview" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                            >
+                                🔄 更新
+                            </button>
+                            <span id="preview-count" class="text-sm text-gray-600 px-3 py-1">
+                                0件のデータ
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div id="csv-preview-data" class="csv-preview bg-gray-50 rounded-lg p-4 max-h-96 overflow-auto">
+                        <!-- CSVプレビューが動的に生成されます -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 詳細統計タブ -->
+        <div id="content-statistics" class="tab-content">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-6">📈 詳細統計分析</h3>
+                <div class="text-center py-12 text-gray-500">
+                    <div class="text-4xl mb-4">📊</div>
+                    <p>詳細統計機能は開発中です</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- システム設定タブ -->
+        <div id="content-settings" class="tab-content">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-6">⚙️ システム設定</h3>
+                <div class="text-center py-12 text-gray-500">
+                    <div class="text-4xl mb-4">⚙️</div>
+                    <p>システム設定機能は開発中です</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- 共有ストレージライブラリ -->
     <script src="shared-storage.js"></script>
+    <!-- CSV出力ライブラリ -->
+    <script src="csv-export.js"></script>
+    <!-- サンプルデータ生成ライブラリ -->
+    <script src="sample-data-generator.js"></script>
     
     <script>
         let updateInterval;
@@ -230,8 +509,34 @@
             // 初期データ読み込み
             updateDashboard();
             
+            // 応募者リストCSV出力イベント
+            setupApplicantListEvents();
+            
             // 初期ログ
             window.alsokStorage.addLog('システム起動', '管理者ダッシュボードが起動しました', 'info');
+        }
+        
+        // 応募者リストイベント設定
+        function setupApplicantListEvents() {
+            const exportButton = document.getElementById('export-applicants-csv');
+            if (exportButton && !exportButton.hasAttribute('data-event-set')) {
+                exportButton.addEventListener('click', function() {
+                    if (window.alsokCSVExporter) {
+                        const success = window.alsokCSVExporter.exportAllApplicants();
+                        if (success) {
+                            const originalText = this.textContent;
+                            this.textContent = '✅ 完了！';
+                            this.disabled = true;
+                            
+                            setTimeout(() => {
+                                this.textContent = originalText;
+                                this.disabled = false;
+                            }, 2000);
+                        }
+                    }
+                });
+                exportButton.setAttribute('data-event-set', 'true');
+            }
         }
         
         // データ更新ハンドラ
@@ -305,12 +610,20 @@
                                 <div class="text-sm text-gray-600 mb-2">
                                     ${progressInfo}
                                 </div>
-                                ${applicant.responses.length > 0 ? `
-                                    <button onclick="showApplicantDetails('${applicant.id}')" 
-                                            class="text-xs text-blue-600 hover:text-blue-800 transition-colors">
-                                        回答詳細を見る
-                                    </button>
-                                ` : ''}
+                                <div class="space-y-1">
+                                    ${applicant.responses.length > 0 ? `
+                                        <button onclick="showApplicantDetails('${applicant.id}')" 
+                                                class="block text-xs text-blue-600 hover:text-blue-800 transition-colors">
+                                            回答詳細を見る
+                                        </button>
+                                    ` : ''}
+                                    ${applicant.screeningResponses && applicant.screeningResponses.length > 0 ? `
+                                        <button onclick="exportApplicantCSV('${applicant.id}')" 
+                                                class="block text-xs text-green-600 hover:text-green-800 transition-colors">
+                                            📊 CSV出力
+                                        </button>
+                                    ` : ''}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -469,6 +782,292 @@
             ).join('\\n');
             
             alert(`応募者詳細 - ${applicant.name}\\n\\n${responses}`);
+        }
+        
+        // 個別応募者CSV出力
+        function exportApplicantCSV(applicantId) {
+            if (window.alsokCSVExporter) {
+                const success = window.alsokCSVExporter.exportSingleApplicant(applicantId);
+                if (success) {
+                    // 成功メッセージを短時間表示
+                    const applicant = window.alsokStorage.getApplicant(applicantId);
+                    window.alsokStorage.addLog('CSV出力', `${applicant.name}のデータをCSV出力しました`, 'success');
+                }
+            }
+        }
+        
+        // タブ切り替え機能
+        function switchTab(tabName) {
+            // すべてのタブボタンとコンテンツを非アクティブに
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 選択されたタブをアクティブに
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            document.getElementById(`content-${tabName}`).classList.add('active');
+            
+            // タブ固有の初期化
+            if (tabName === 'data-management') {
+                initializeDataManagement();
+            }
+        }
+        
+        // データ管理タブ初期化
+        function initializeDataManagement() {
+            updateDataManagementStats();
+            updateApplicationSourcesChart();
+            updateCSVPreview();
+            setupDataManagementEvents();
+        }
+        
+        // データ管理統計更新
+        function updateDataManagementStats() {
+            const applicants = window.alsokStorage.getAllApplicants();
+            const completedApplicants = applicants.filter(a => 
+                a.screeningResponses && a.screeningResponses.length > 0
+            );
+            const qualifiedApplicants = completedApplicants.filter(a => a.isQualified);
+            
+            // 完了率計算
+            const completionRate = applicants.length > 0 ? 
+                Math.round((completedApplicants.length / applicants.length) * 100) : 0;
+            
+            // 平均所要時間計算
+            let avgDuration = 0;
+            if (completedApplicants.length > 0) {
+                const totalDuration = completedApplicants.reduce((sum, a) => {
+                    if (a.screeningStartedAt && a.screeningCompletedAt) {
+                        const start = new Date(a.screeningStartedAt);
+                        const end = new Date(a.screeningCompletedAt);
+                        return sum + Math.ceil((end - start) / (1000 * 60));
+                    }
+                    return sum;
+                }, 0);
+                avgDuration = Math.round(totalDuration / completedApplicants.length);
+            }
+            
+            // 統計表示更新
+            document.getElementById('data-stat-completed').textContent = completedApplicants.length;
+            document.getElementById('data-stat-qualified').textContent = qualifiedApplicants.length;
+            document.getElementById('data-stat-rate').textContent = `${completionRate}%`;
+            document.getElementById('data-stat-duration').textContent = `${avgDuration}分`;
+        }
+        
+        // 応募経路チャート更新
+        function updateApplicationSourcesChart() {
+            const applicants = window.alsokStorage.getAllApplicants();
+            const completedApplicants = applicants.filter(a => 
+                a.screeningResponses && a.screeningResponses.length > 0
+            );
+            
+            const sourceMapping = {
+                1: 'お電話でのお問い合わせ',
+                2: 'Indeed（インディード）',
+                3: 'ハローワーク',
+                4: '弊社ホームページ',
+                5: 'SNS（Instagram、Twitter等）',
+                6: '求人誌・フリーペーパー',
+                7: '知人からの紹介',
+                8: 'その他'
+            };
+            
+            const sourceCounts = {};
+            completedApplicants.forEach(applicant => {
+                const source = sourceMapping[applicant.applicationSource] || 'その他';
+                sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+            });
+            
+            const container = document.getElementById('application-sources-chart');
+            
+            if (Object.keys(sourceCounts).length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <div class="text-4xl mb-4">📊</div>
+                        <p>応募データがまだありません</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const total = Object.values(sourceCounts).reduce((sum, count) => sum + count, 0);
+            
+            container.innerHTML = Object.entries(sourceCounts).map(([source, count]) => {
+                const percentage = Math.round((count / total) * 100);
+                return `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">${source}</div>
+                            <div class="text-xs text-gray-600">${count}件 (${percentage}%)</div>
+                        </div>
+                        <div class="w-24 bg-gray-200 rounded-full h-2 ml-4">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // CSVプレビュー更新
+        function updateCSVPreview() {
+            const applicants = window.alsokStorage.getAllApplicants();
+            const completedApplicants = applicants.filter(a => 
+                a.screeningResponses && a.screeningResponses.length > 0
+            );
+            
+            const container = document.getElementById('csv-preview-data');
+            const countElement = document.getElementById('preview-count');
+            
+            countElement.textContent = `${completedApplicants.length}件のデータ`;
+            
+            if (completedApplicants.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <div class="text-4xl mb-4">📋</div>
+                        <div>事前確認を完了した応募者がいません</div>
+                        <button onclick="generateSampleDataForManagement()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg">
+                            サンプルデータを生成
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            // CSVデータ生成（最初の3行のみプレビュー）
+            const previewApplicants = completedApplicants.slice(0, 3);
+            const csvRows = [];
+            const headers = window.alsokCSVExporter.csvHeaders;
+            csvRows.push(headers);
+            
+            previewApplicants.forEach(applicant => {
+                csvRows.push(window.alsokCSVExporter.convertApplicantToCSVRow(applicant));
+            });
+            
+            // テーブル生成
+            const tableHTML = `
+                <table>
+                    <thead>
+                        <tr>${headers.slice(0, 8).map(header => `<th>${header}</th>`).join('')}</tr>
+                    </thead>
+                    <tbody>
+                        ${csvRows.slice(1).map(row => `
+                            <tr>
+                                ${row.slice(0, 8).map((cell, index) => {
+                                    let classes = '';
+                                    if (headers[index] === 'ステータス' && cell === '事前確認完了') {
+                                        classes = 'status-completed';
+                                    }
+                                    if (headers[index] === '法的適格性') {
+                                        if (cell === '適格') {
+                                            classes = 'legal-qualified';
+                                        } else if (cell && cell.includes('要注意')) {
+                                            classes = 'legal-warning';
+                                        }
+                                    }
+                                    return `<td class="${classes}" title="${cell}">${cell || '-'}</td>`;
+                                }).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                ${completedApplicants.length > 3 ? `
+                    <div class="text-center mt-4 text-sm text-gray-600">
+                        ... 他 ${completedApplicants.length - 3} 件のデータがあります
+                    </div>
+                ` : ''}
+            `;
+            
+            container.innerHTML = tableHTML;
+        }
+        
+        // データ管理イベント設定
+        function setupDataManagementEvents() {
+            // 一度だけ設定されるように確認
+            if (document.getElementById('export-all-csv').hasAttribute('data-event-set')) {
+                return;
+            }
+            
+            // CSV出力
+            document.getElementById('export-all-csv').addEventListener('click', function() {
+                if (window.alsokCSVExporter) {
+                    const success = window.alsokCSVExporter.exportAllApplicants();
+                    if (success) {
+                        showDataActionFeedback(this, '✅ ダウンロード完了！');
+                    }
+                }
+            });
+            
+            // テンプレートダウンロード
+            document.getElementById('download-template-csv').addEventListener('click', function() {
+                downloadCSVTemplate();
+                showDataActionFeedback(this, '✅ ダウンロード完了！');
+            });
+            
+            // サンプルデータ生成
+            document.getElementById('generate-sample-csv').addEventListener('click', function() {
+                generateSampleDataForManagement();
+                showDataActionFeedback(this, '✅ 生成完了！');
+            });
+            
+            // プレビュー更新
+            document.getElementById('refresh-csv-preview').addEventListener('click', function() {
+                updateCSVPreview();
+                updateDataManagementStats();
+                updateApplicationSourcesChart();
+                showDataActionFeedback(this, '✅ 更新完了！');
+            });
+            
+            // イベント設定済みマーク
+            document.getElementById('export-all-csv').setAttribute('data-event-set', 'true');
+        }
+        
+        // アクションフィードバック表示
+        function showDataActionFeedback(button, message) {
+            const originalText = button.textContent;
+            button.textContent = message;
+            button.disabled = true;
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.disabled = false;
+            }, 2000);
+        }
+        
+        // CSVテンプレートダウンロード
+        function downloadCSVTemplate() {
+            const headers = window.alsokCSVExporter.csvHeaders;
+            const templateContent = headers.join(',') + '\r\n';
+            
+            const bom = '\uFEFF';
+            const blob = new Blob([bom + templateContent], { 
+                type: 'text/csv;charset=utf-8;' 
+            });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'ALSOK採用管理テンプレート.csv');
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            URL.revokeObjectURL(url);
+        }
+        
+        // 管理画面用サンプルデータ生成
+        function generateSampleDataForManagement() {
+            if (window.alsokSampleGenerator) {
+                window.alsokSampleGenerator.addSampleDataToStorage(5);
+                
+                // UI更新
+                setTimeout(() => {
+                    updateDataManagementStats();
+                    updateApplicationSourcesChart();
+                    updateCSVPreview();
+                    updateDashboard(); // メイン統計も更新
+                }, 500);
+            }
         }
         
         // クリーンアップ
