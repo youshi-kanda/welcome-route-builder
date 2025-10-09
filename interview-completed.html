@@ -357,10 +357,7 @@
     <!-- Google Apps Script連携 -->
     <script src="gas-integration.js"></script>
     <!-- クライアントデモ用GAS設定 -->
-    <script>
-        // クライアント向けデモ用GAS URL
-        window.CLIENT_DEMO_GAS_URL = 'https://script.google.com/macros/s/AKfycbyZchii9FU-zsSWw-oLrTNAUkAI4MU8sqlEInRyA0c5kpxvsYGbjf_TtWqNrQeaHXBv/exec';
-    </script>
+    <!-- クライアント向けデモ用GAS URLは client-demo-config.js で設定 -->
     
     <script>
         let applicantId = null;
@@ -725,7 +722,7 @@
                     console.log('🎯 クライアントデモ用GAS URLを設定:', window.CLIENT_DEMO_GAS_URL.substring(0, 50) + '...');
                 }
                 
-                const gasIntegration = initializeGASIntegration(demoConfig);
+                const gasIntegration = new GASIntegration(demoConfig);
                 const status = gasIntegration.getStatus();
                 
                 updateGASStatus({
