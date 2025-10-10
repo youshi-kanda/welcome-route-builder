@@ -121,6 +121,29 @@ npm run dev
 npm run build
 ```
 
+## 📁 ファイル再編プラン（作業メモ）
+
+このリポジトリにはフロントエンド（`src/`）に加え、GAS や Google Sheets 関連のユーティリティやデモ HTML がルート直下に散在しています。
+以下は整理方針（安全に段階的に実行するための計画）です。
+
+- infra/gas/: Google Apps Script / Google Sheets 関連のスクリプトを集約します（例: `gas-script.js`, `google-sheets-api.js`, `google-sheets-config.js`）。
+- demos/: デモ用 HTML を移動します（`gas-demo.html`, `google-sheets-demo.html`, `interview-completed.html` など）。
+- scripts/: 補助スクリプトを移動（`csv-export.js`, `sample-data-generator.js` など）。
+
+実行手順（安全）:
+1. feature ブランチを作成（例: `chore/reorg-files`）
+2. ファイルを移動し、参照（HTML の script src、`alsok-server.mjs` のルーティング等）を更新
+3. ローカルで `npm run dev` を実行して表示確認（各デモページ、管理画面、API のエンドポイント）
+4. PR を作成してレビュー・マージ
+
+注意:
+- 本番への影響を避けるため、デモデータや実際の API キーは直接リポジトリに含めないでください（`.env` や Cloudflare 環境変数を使用）。
+- `gas-script.js` は Google Apps Script エディタへコピーしてデプロイする想定です。移動後も README の手順を更新してください。
+
+---
+
+（このセクションは自動で追加されました。整理を進める場合は次のステップを指示してください。）
+
 ビルド成果物は `dist/` ディレクトリに出力されます。
 
 ## 🎯 ALSOK本番システム
