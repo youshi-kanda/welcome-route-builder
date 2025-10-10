@@ -300,6 +300,64 @@ function addInterviewData(data) {
     }
   
     const now = new Date();
+    // Ensure stepN_answer fields are present by attempting to map from alternative payload shapes
+    try {
+        // If step answers are missing, try to map from arrays like interview_responses or responses
+        const maxSteps = 11;
+        // Helper to set step if empty
+        function setStepIfEmpty(stepIdx, value) {
+            const key = `step${stepIdx}_answer`;
+            if ((!data[key] || String(data[key]).trim() === '') && value !== undefined && value !== null) {
+                data[key] = String(value);
+            }
+        }
+
+        // 1) If interview_responses array exists (from DemoMobile etc.)
+        if (Array.isArray(data.interview_responses) && data.interview_responses.length) {
+            data.interview_responses.forEach(function(item, idx) {
+                if (idx < maxSteps) {
+                    const ans = item.answer || item.response || item.text || '';
+                    setStepIfEmpty(idx + 1, ans);
+                }
+            });
+        }
+
+        // 2) If responses array exists (from shared-storage with questionNumber)
+        if (Array.isArray(data.responses) && data.responses.length) {
+            data.responses.forEach(function(item) {
+                var qnum = item.questionNumber || item.step || null;
+                var ans = item.answer || item.response || item.value || '';
+                if (qnum && qnum >= 1 && qnum <= maxSteps) {
+                    setStepIfEmpty(qnum, ans);
+                }
+            });
+            // also support positional mapping if no questionNumber provided
+            var positional = data.responses.filter(function(r){ return !r.questionNumber; });
+            if (positional && positional.length) {
+                var posIndex = 0;
+                for (var i = 1; i <= maxSteps; i++) {
+                    var key = `step${i}_answer`;
+                    if (!data[key] || String(data[key]).trim() === '') {
+                        if (posIndex < positional.length) {
+                            setStepIfEmpty(i, positional[posIndex].answer || positional[posIndex].response || positional[posIndex].value || '');
+                            posIndex++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3) If some other array-like fields exist (e.g., interviewResponses)
+        if (!data.step1_answer && Array.isArray(data.interviewResponses) && data.interviewResponses.length) {
+            data.interviewResponses.forEach(function(item, idx) {
+                if (idx < maxSteps) setStepIfEmpty(idx + 1, item.answer || item.response || item.text || '');
+            });
+        }
+
+    } catch (mapError) {
+        console.warn('Fallback mapping error:', mapError);
+    }
+
     const qualificationStatus = determineQualificationStatus(data);
   
     // Prepare a truncated raw JSON note for debugging - stored in AA (備考)

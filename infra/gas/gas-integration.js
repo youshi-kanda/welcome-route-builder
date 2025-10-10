@@ -213,17 +213,39 @@ class GASIntegration {
     }
 
     async formatDataForGAS(applicantData) {
-        const responses = applicantData.responses || [];
+        // Normalize different shapes of interview responses coming from various demo pages
+        // Support: applicantData.responses (with questionNumber), applicantData.interview_responses (array), and fall back to any array-like field
+        let responses = [];
+        if (Array.isArray(applicantData.responses) && applicantData.responses.length) {
+            responses = applicantData.responses;
+        } else if (Array.isArray(applicantData.interview_responses) && applicantData.interview_responses.length) {
+            responses = applicantData.interview_responses.map((r, idx) => ({
+                questionNumber: r.questionNumber || idx + 1,
+                question: r.question || r.questionText || r.question || '',
+                answer: r.answer || r.response || r.text || ''
+            }));
+        } else if (Array.isArray(applicantData.interviewResponses) && applicantData.interviewResponses.length) {
+            responses = applicantData.interviewResponses.map((r, idx) => ({
+                questionNumber: r.questionNumber || idx + 1,
+                question: r.question || r.questionText || '',
+                answer: r.answer || r.response || r.text || ''
+            }));
+        } else if (Array.isArray(applicantData.responses)) {
+            responses = applicantData.responses;
+        }
+
         const stepAnswers = {};
-        responses.forEach(response => {
-            if (response.questionNumber) {
-                stepAnswers[`step${response.questionNumber}_answer`] = response.answer;
-            }
+        // Populate stepN_answer either from explicit questionNumber or by sequential index fallback
+        responses.forEach((response, idx) => {
+            const qNum = response.questionNumber || response.step || (idx + 1);
+            const ans = response.answer || response.response || response.value || '';
+            stepAnswers[`step${qNum}_answer`] = ans;
         });
         const ipAddress = await this.getUserIP();
         return {
-            applicantName: applicantData.name || '',
-            phoneNumber: applicantData.phone || '',
+            // tolerate multiple name/phone field names from different flows
+            applicantName: applicantData.name || applicantData.fullName || applicantData.applicantName || '',
+            phoneNumber: applicantData.phone || applicantData.phoneNumber || applicantData.tel || '',
             applicationSource: applicantData.source || 'AI面接chatbot',
             step1_answer: stepAnswers.step1_answer || '',
             step2_answer: stepAnswers.step2_answer || '',
