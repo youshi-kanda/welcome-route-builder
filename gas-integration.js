@@ -3,6 +3,24 @@
  * ALSOK採用システム専用（CORS解決済み）
  */
 
+// カスタムエラークラス
+class GASIntegrationError extends Error {
+    constructor(message, type = 'generic') {
+        super(message);
+        this.name = 'GASIntegrationError';
+        this.type = type; // e.g. 'timeout','network','http','validation','environment'
+    }
+}
+
+function normalizeError(error) {
+    if (error instanceof Error) return error;
+    try {
+        return new Error(String(error));
+    } catch (e) {
+        return new Error('Unknown error');
+    }
+}
+
 class GASIntegration {
     constructor() {
         // 新しいAPIエンドポイント（CORS解決済み）
@@ -12,6 +30,10 @@ class GASIntegration {
         this.connectionStatus = 'disconnected';
         this.maxRetries = 3;
         this.retryDelay = 2000; // 2秒
+        // fetch抽象化（テストで差し替え可能）
+        this.httpFetch = (typeof window !== 'undefined' && window.fetch) ? window.fetch.bind(window) : null;
+        // デモ永続化を許可するか（安全チェックのためにフラグ化）
+        this.allowDemoPersist = false; // デフォルトは許可しない
         
         // 設定読み込み
         this.loadConfiguration();
@@ -37,6 +59,10 @@ class GASIntegration {
                     this.gasWebAppUrl = config.webAppUrl;
                 }
                 this.isEnabled = config.enabled !== false;
+                // デモ永続化のフラグ
+                if (config.allowDemoPersist !== undefined) {
+                    this.allowDemoPersist = !!config.allowDemoPersist;
+                }
             }
             
             // 環境変数から読み込み（最優先）
@@ -46,6 +72,10 @@ class GASIntegration {
                 }
                 if (window.GAS_WEB_APP_URL) {
                     this.gasWebAppUrl = window.GAS_WEB_APP_URL;
+                }
+                // グローバルでデモ永続化を許可する場合
+                if (window.ALSOK_ALLOW_DEMO_PERSIST) {
+                    this.allowDemoPersist = true;
                 }
             }
             
@@ -68,6 +98,7 @@ class GASIntegration {
                 apiEndpoint: config.apiEndpoint || this.apiEndpoint,
                 webAppUrl: config.webAppUrl || this.gasWebAppUrl,
                 enabled: config.enabled !== undefined ? config.enabled : this.isEnabled,
+                allowDemoPersist: config.allowDemoPersist !== undefined ? !!config.allowDemoPersist : this.allowDemoPersist,
                 lastUpdated: new Date().toISOString()
             };
             
@@ -273,7 +304,8 @@ class GASIntegration {
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒タイムアウト
         
         try {
-            const response = await fetch(this.apiEndpoint, {
+            const fetchFn = this.httpFetch || fetch;
+            const response = await fetchFn(this.apiEndpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -285,7 +317,7 @@ class GASIntegration {
             clearTimeout(timeoutId);
             
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                throw new GASIntegrationError(`HTTP ${response.status}: ${response.statusText}`, 'http');
             }
             
             const responseData = await response.json();
@@ -293,14 +325,16 @@ class GASIntegration {
             
         } catch (error) {
             clearTimeout(timeoutId);
-            
-            if (error.name === 'AbortError') {
-                throw new Error('リクエストがタイムアウトしました');
-            } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                throw new Error('ネットワーク接続エラー - システム管理者にお問い合わせください');
-            } else {
-                throw error;
+            const err = normalizeError(error);
+            if (err.name === 'AbortError') {
+                throw new GASIntegrationError('リクエストがタイムアウトしました', 'timeout');
             }
+            if (err.message && err.message.includes('Failed to fetch')) {
+                throw new GASIntegrationError('ネットワーク接続エラー - システム管理者にお問い合わせください', 'network');
+            }
+            // 既に GASIntegrationError の場合はそのまま投げる
+            if (err instanceof GASIntegrationError) throw err;
+            throw new GASIntegrationError(err.message || '不明なエラー', 'generic');
         }
     }
 
@@ -545,6 +579,28 @@ class GASIntegration {
             const result = await this.sendDataWithRetry(demoData);
             results.push(result);
             
+            // オプション: デモデータを安全な場合のみ永続化（ステージング等）
+            if (this.isSafeToPersist()) {
+                try {
+                    // fire-and-forget で永続化を試みる
+                    const fetchFn = this.httpFetch || fetch;
+                    await fetchFn(this.apiEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(demoData)
+                    });
+                } catch (e) {
+                    // 永続化失敗は localStorage に残す
+                    try {
+                        const failed = JSON.parse(localStorage.getItem('gas_demo_persist_failed') || '[]');
+                        failed.push({ data: demoData, error: String(e), at: new Date().toISOString() });
+                        localStorage.setItem('gas_demo_persist_failed', JSON.stringify(failed));
+                    } catch (le) {
+                        // ignore
+                    }
+                }
+            }
+            
             if (i < count - 1) {
                 await this.sleep(1000); // 1秒間隔
             }
@@ -588,6 +644,26 @@ class GASIntegration {
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             notes: `GASデモデータ #${index}`
         };
+    }
+
+    // デモの永続化が安全かを判定する（デフォルトでは不可）
+    isSafeToPersist() {
+        // 明示的な許可がある場合のみ許可
+        if (!this.allowDemoPersist) return false;
+
+        // 追加チェック: エンドポイントが明示的にステージングらしい文字列を含むか
+        try {
+            const host = new URL(this.apiEndpoint, window.location.origin).host;
+            // 例えば 'staging' や 'dev' を含むホスト名のみ許可
+            if (host.includes('staging') || host.includes('dev') || host.includes('localhost')) {
+                return true;
+            }
+        } catch (e) {
+            // 解析失敗は不可とする
+            return false;
+        }
+
+        return false;
     }
 }
 

@@ -3,9 +3,12 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8787";
 const API_TIMEOUT = 10000; // 10 seconds
 const DEBUG_MODE = import.meta.env.VITE_DEBUG_MODE === 'true';
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+// デモ中の操作を実データ（GAS経由など）へ反映するかどうか
+// .env.local に VITE_DEMO_PERSIST=true を設定すると有効
+const DEMO_PERSIST = import.meta.env.VITE_DEMO_PERSIST === 'true';
 
 // デバッグログ
-const debugLog = (message: string, data?: any) => {
+const debugLog = (message: string, data?: unknown) => {
   if (DEBUG_MODE) {
     console.log(`[ALSOK API] ${message}`, data);
   }
@@ -236,7 +239,7 @@ export const api = {
   // 管理者用API（Phase2）
   getInterviewers: () => {
     debugLog('Getting interviewers');
-    return apiCall<{interviewers: any[]}>("/api/interviewers");
+    return apiCall<{interviewers: {id: string; name: string}[]}>("/api/interviewers");
   },
 
   updateDecision: (data: {
@@ -361,6 +364,24 @@ export const mockApplicationResponse = async (data: ApplicationRequest): Promise
   
   const applicantId = `DEMO_${Date.now().toString(36).toUpperCase()}`;
   
+  // オプション: デモ操作を実際の API にバックグラウンド保存する
+  if (DEMO_PERSIST) {
+    // fire-and-forget で本番/ステージングの API に POST する
+    (async () => {
+      try {
+        const persistUrl = `${API_BASE}/api/applications`;
+        await fetch(persistUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...data, applicant_id: applicantId })
+        });
+        debugLog('DEMO_PERSIST: persisted application to real API', { url: persistUrl, applicantId });
+      } catch (e) {
+        debugLog('DEMO_PERSIST: failed to persist application', e);
+      }
+    })();
+  }
+
   return {
     ok: true,
     applicant_id: applicantId
@@ -383,7 +404,7 @@ export const mockNextSlotResponse = async (data: InterviewSlotRequest): Promise<
 };
 
 // デモ用SMSログモック
-export const mockSmsLogsResponse = async (params?: any): Promise<SmsLogsResponse> => {
+export const mockSmsLogsResponse = async (params?: Record<string, unknown>): Promise<SmsLogsResponse> => {
   await new Promise(resolve => setTimeout(resolve, 800));
   
   // 静的なモックデータを返す
