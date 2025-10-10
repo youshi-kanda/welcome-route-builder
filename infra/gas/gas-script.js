@@ -302,6 +302,34 @@ function addInterviewData(data) {
     const now = new Date();
     // Ensure stepN_answer fields are present by attempting to map from alternative payload shapes
     try {
+        // Keyword-based mapping: map common question text keywords to the intended step index
+        function mapByKeyword(responseText) {
+            if (!responseText) return null;
+            const t = String(responseText).toLowerCase();
+            // age
+            if (t.includes('年齢') || t.includes('歳') || t.includes('年')) return 1;
+            // nationality
+            if (t.includes('国籍') || t.includes('日本') || t.includes('国')) return 2;
+            // arrest / criminal
+            if (t.includes('逮捕') || t.includes('罰') || t.includes('犯罪') || t.includes('前科')) return 3;
+            // organized crime
+            if (t.includes('暴力') || t.includes('暴力団') || t.includes('やくざ')) return 4;
+            // mental
+            if (t.includes('精神') || t.includes('うつ') || t.includes('メンタル')) return 5;
+            // alcohol
+            if (t.includes('アルコール') || t.includes('お酒') || t.includes('飲酒')) return 6;
+            // drugs
+            if (t.includes('薬') || t.includes('ドラッグ') || t.includes('薬物')) return 7;
+            // address
+            if (t.includes('住') || t.includes('住所') || t.includes('在住')) return 8;
+            // contact / phone
+            if (t.includes('連絡') || t.includes('電話') || t.includes('携帯')) return 9;
+            // interview wish / desire
+            if (t.includes('希望') || t.includes('面接希望') || t.includes('応募') || t.includes('志望')) return 10;
+            // notes / special
+            if (t.includes('特') || t.includes('備考') || t.includes('その他')) return 11;
+            return null;
+        }
         // If step answers are missing, try to map from arrays like interview_responses or responses
         const maxSteps = 11;
         // Helper to set step if empty
@@ -314,10 +342,20 @@ function addInterviewData(data) {
 
         // 1) If interview_responses array exists (from DemoMobile etc.)
         if (Array.isArray(data.interview_responses) && data.interview_responses.length) {
+            // first attempt keyword mapping
             data.interview_responses.forEach(function(item, idx) {
                 if (idx < maxSteps) {
-                    const ans = item.answer || item.response || item.text || '';
-                    setStepIfEmpty(idx + 1, ans);
+                    var qtext = item.question || item.questionText || '';
+                    var ans = item.answer || item.response || item.text || '';
+                    var mapped = mapByKeyword(qtext);
+                    if (mapped) {
+                        setStepIfEmpty(mapped, ans);
+                    } else {
+                        // store for positional fill later if no keyword
+                        // attach a temporary _posAnswers array
+                        data._posAnswers = data._posAnswers || [];
+                        data._posAnswers.push(ans);
+                    }
                 }
             });
         }
@@ -326,32 +364,51 @@ function addInterviewData(data) {
         if (Array.isArray(data.responses) && data.responses.length) {
             data.responses.forEach(function(item) {
                 var qnum = item.questionNumber || item.step || null;
+                var qtext = item.question || item.questionText || '';
                 var ans = item.answer || item.response || item.value || '';
                 if (qnum && qnum >= 1 && qnum <= maxSteps) {
                     setStepIfEmpty(qnum, ans);
-                }
-            });
-            // also support positional mapping if no questionNumber provided
-            var positional = data.responses.filter(function(r){ return !r.questionNumber; });
-            if (positional && positional.length) {
-                var posIndex = 0;
-                for (var i = 1; i <= maxSteps; i++) {
-                    var key = `step${i}_answer`;
-                    if (!data[key] || String(data[key]).trim() === '') {
-                        if (posIndex < positional.length) {
-                            setStepIfEmpty(i, positional[posIndex].answer || positional[posIndex].response || positional[posIndex].value || '');
-                            posIndex++;
-                        }
+                } else {
+                    var mapped = mapByKeyword(qtext);
+                    if (mapped) {
+                        setStepIfEmpty(mapped, ans);
+                    } else {
+                        data._posAnswers = data._posAnswers || [];
+                        data._posAnswers.push(ans);
                     }
                 }
-            }
+            });
         }
 
         // 3) If some other array-like fields exist (e.g., interviewResponses)
         if (!data.step1_answer && Array.isArray(data.interviewResponses) && data.interviewResponses.length) {
             data.interviewResponses.forEach(function(item, idx) {
-                if (idx < maxSteps) setStepIfEmpty(idx + 1, item.answer || item.response || item.text || '');
+                var qtext = item.question || item.questionText || '';
+                var ans = item.answer || item.response || item.text || '';
+                var mapped = mapByKeyword(qtext);
+                if (mapped) {
+                    setStepIfEmpty(mapped, ans);
+                } else {
+                    data._posAnswers = data._posAnswers || [];
+                    data._posAnswers.push(ans);
+                }
             });
+        }
+
+        // Finally, fill remaining empty steps with any positional answers we've collected
+        if (Array.isArray(data._posAnswers) && data._posAnswers.length) {
+            var posIdx = 0;
+            for (var s = 1; s <= maxSteps; s++) {
+                var keyS = `step${s}_answer`;
+                if (!data[keyS] || String(data[keyS]).trim() === '') {
+                    if (posIdx < data._posAnswers.length) {
+                        setStepIfEmpty(s, data._posAnswers[posIdx]);
+                        posIdx++;
+                    }
+                }
+            }
+            // cleanup
+            delete data._posAnswers;
         }
 
     } catch (mapError) {
