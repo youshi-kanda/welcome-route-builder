@@ -5,95 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google Sheets Integration Demo - ALSOK Interview System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        alsok: {
-                            blue: '#0066CC',
-                            red: '#E60012',
-                            gray: '#666666'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        .demo-step {
-            transition: all 0.3s ease;
-        }
-        
-        .demo-step:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
-        
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        
-        .status-success { background-color: #10B981; }
-        .status-pending { background-color: #6B7280; }
-        .status-demo { background-color: #F59E0B; }
-        .status-error { background-color: #EF4444; }
-        
-        .log-entry {
-            font-family: 'Courier New', monospace;
-            font-size: 0.875rem;
-            padding: 0.5rem;
-            border-radius: 0.375rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .log-success { background-color: #dcfce7; color: #166534; }
-        .log-error { background-color: #fee2e2; color: #991b1b; }
-        .log-info { background-color: #dbeafe; color: #1d4ed8; }
-        .log-warning { background-color: #fef3c7; color: #92400e; }
-    </style>
-</head>
-<body class="bg-gray-50 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div class="flex items-center justify-between mb-4">
-                <h1 class="text-2xl font-bold text-alsok-blue">Google Sheets 統合デモ</h1>
-                <div class="flex items-center space-x-4">
-                    <div class="flex items-center">
-                        <span class="status-dot" id="connectionStatus"></span>
-                        <span id="connectionText" class="text-sm font-medium">接続確認中...</span>
-                    </div>
-                    <button id="refreshConnectionBtn" class="text-sm bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded">
-                        更新
-                    </button>
-                </div>
-            </div>
-            <p class="text-gray-600">ALSOK面接システムとGoogle Spreadsheetsの連携をテストします。</p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Demo Actions -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-bold mb-4 text-gray-800">デモアクション</h2>
-                
-                <div class="space-y-4">
-                    <!-- 接続テスト -->
-                    <div class="demo-step border rounded-lg p-4">
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="font-semibold text-gray-800">1. 接続テスト</h3>
-                            <span class="status-dot status-pending" id="testStatus"></span>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-3">Google Sheets APIとの接続をテストします</p>
-                        <button id="testConnectionBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors">
-                            接続テスト実行
-                        </button>
-                    </div>
-
+    <!DOCTYPE html>
+    <html lang="ja">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>Archived: Google Sheets demo</title>
+      <meta http-equiv="refresh" content="0;url=/demos/google-sheets-demo.html">
+    </head>
+    <body>
+      <p>This page has been archived to <a href="/demos/google-sheets-demo.html">/demos/google-sheets-demo.html</a>.</p>
+      <p><a href="/demos/google-sheets-setup.html">Open archived setup</a></p>
+    </body>
+    </html>
                     <!-- サンプルデータ送信 -->
                     <div class="demo-step border rounded-lg p-4">
                         <div class="flex items-center justify-between mb-3">
@@ -215,8 +139,8 @@
 
     <!-- Scripts -->
     <script src="shared-storage.js"></script>
-    <script src="google-sheets-config.js"></script>
-    <script src="google-sheets-api.js"></script>
+    <script src="/infra/gas/google-sheets-config.js"></script>
+    <script src="/infra/gas/google-sheets-api.js"></script>
     <script>
         class GoogleSheetsDemo {
             constructor() {

@@ -5,113 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google Apps Script 連携設定 - ALSOK Interview System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        alsok: {
-                            blue: '#0066CC',
-                            red: '#E60012',
-                            gray: '#666666'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        .setup-step {
-            transition: all 0.3s ease;
-        }
-        
-        .setup-step:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
-        
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        
-        .status-connected { background-color: #10B981; }
-        .status-disconnected { background-color: #EF4444; }
-        .status-testing { 
-            background-color: #F59E0B; 
-            animation: pulse 2s infinite;
-        }
-        .status-sending { 
-            background-color: #3B82F6; 
-            animation: pulse 2s infinite;
-        }
-        
-        .code-block {
-            background-color: #1f2937;
-            color: #f9fafb;
-            font-family: 'Courier New', monospace;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            font-size: 0.875rem;
-            line-height: 1.5;
-        }
-        
-        .copy-button {
-            transition: all 0.2s ease;
-        }
-        
-        .copy-button:hover {
-            background-color: #059669;
-        }
-        
-        .step-number {
-            background: linear-gradient(135deg, #0066CC 0%, #0052A3 100%);
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.875rem;
-        }
-    </style>
-</head>
-<body class="bg-gray-50 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div class="flex items-center justify-between mb-4">
-                <h1 class="text-2xl font-bold text-alsok-blue">Google Apps Script 連携設定</h1>
-                <div class="flex items-center">
-                    <span class="status-indicator" id="connectionStatusIndicator"></span>
-                    <span id="connectionStatusText" class="text-sm font-medium">未接続</span>
-                </div>
-            </div>
-            <p class="text-gray-600">ALSOK面接システムをGoogle Apps Script (GAS) 経由でスプレッドシートと連携させます。</p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Setup Instructions -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-bold mb-4 text-gray-800">📋 セットアップ手順</h2>
-                
-                <div class="space-y-6">
-                    <!-- Step 1 -->
-                    <div class="setup-step">
-                        <div class="flex items-start space-x-4">
-                            <div class="step-number">1</div>
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-gray-800 mb-2">Google Sheets でスプレッドシート作成</h3>
-                                <p class="text-sm text-gray-600 mb-3">新しいスプレッドシートを作成し、データ受信の準備をします</p>
-                                <a href="https://docs.google.com/spreadsheets/create" target="_blank" 
-                                   class="inline-flex items-center text-alsok-blue hover:text-alsok-red text-sm">
-                                    📊 新しいスプレッドシートを作成
+    <!DOCTYPE html>
+    <html lang="ja">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>Archived: GAS setup</title>
+      <meta http-equiv="refresh" content="0;url=/demos/gas-setup.html">
+    </head>
+    <body>
+      <p>This page has been archived to <a href="/demos/gas-setup.html">/demos/gas-setup.html</a>.</p>
+      <p><a href="/demos/gas-demo.html">Back to GAS demo</a></p>
+    </body>
+    </html>
                                     <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                                     </svg>
@@ -316,7 +222,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="gas-integration.js"></script>
+    <script src="/infra/gas/gas-integration.js"></script>
     <script>
         // GAS Setup UI Controller
         class GASSetupUI {
@@ -603,7 +509,7 @@
 
             async loadGASCode() {
                 try {
-                    const response = await fetch('gas-script.js');
+                    const response = await fetch('/infra/gas/gas-script.js');
                     const code = await response.text();
                     
                     const codeBlock = document.getElementById('gasCodeBlock');
@@ -616,7 +522,7 @@
 
             async copyGASCode() {
                 try {
-                    const response = await fetch('gas-script.js');
+                    const response = await fetch('/infra/gas/gas-script.js');
                     const code = await response.text();
                     
                     await navigator.clipboard.writeText(code);
@@ -628,7 +534,7 @@
 
             async downloadGASCode() {
                 try {
-                    const response = await fetch('gas-script.js');
+                    const response = await fetch('/infra/gas/gas-script.js');
                     const code = await response.text();
                     
                     const blob = new Blob([code], { type: 'text/javascript' });

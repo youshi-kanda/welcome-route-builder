@@ -44,41 +44,41 @@ const server = createServer(async (req, res) => {
       // 面接完了画面
       filePath = join(__dirname, 'interview-completed.html');
     } else if (pathname === '/spreadsheet') {
-      // スプレッドシートデモ画面
-      filePath = join(__dirname, 'spreadsheet-demo.html');
+      // スプレッドシートデモ画面 (archived under demos/)
+      filePath = join(__dirname, 'demos', 'spreadsheet-demo.html');
     } else if (pathname === '/sheets-demo') {
-      // Google Sheets統合デモ画面
-      filePath = join(__dirname, 'google-sheets-demo.html');
+      // Google Sheets統合デモ画面 (archived)
+      filePath = join(__dirname, 'demos', 'google-sheets-demo.html');
     } else if (pathname === '/sheets-setup') {
-      // Google Sheets設定画面
-      filePath = join(__dirname, 'google-sheets-setup.html');
+      // Google Sheets設定画面 (archived)
+      filePath = join(__dirname, 'demos', 'google-sheets-setup.html');
     } else if (pathname === '/gas-setup') {
-      // Google Apps Script設定画面
-      filePath = join(__dirname, 'gas-setup.html');
+      // Google Apps Script設定画面 (archived)
+      filePath = join(__dirname, 'demos', 'gas-setup.html');
     } else if (pathname === '/gas-demo') {
-      // Google Apps Scriptデモ画面
-      filePath = join(__dirname, 'gas-demo.html');
+      // Google Apps Scriptデモ画面 (archived)
+      filePath = join(__dirname, 'demos', 'gas-demo.html');
     } else if (pathname === '/shared-storage.js') {
-      // 共有ストレージライブラリ
+      // 共有ストレージライブラリ (root stays)
       filePath = join(__dirname, 'shared-storage.js');
     } else if (pathname === '/csv-export.js') {
-      // CSV出力ライブラリ
-      filePath = join(__dirname, 'csv-export.js');
+      // CSV出力ライブラリ -> scripts/
+      filePath = join(__dirname, 'scripts', 'csv-export.js');
     } else if (pathname === '/sample-data-generator.js') {
-      // サンプルデータ生成ライブラリ
-      filePath = join(__dirname, 'sample-data-generator.js');
+      // サンプルデータ生成ライブラリ -> scripts/
+      filePath = join(__dirname, 'scripts', 'sample-data-generator.js');
     } else if (pathname === '/google-sheets-config.js') {
-      // Google Sheets設定ライブラリ
-      filePath = join(__dirname, 'google-sheets-config.js');
+      // Google Sheets設定ライブラリ -> infra/gas/
+      filePath = join(__dirname, 'infra', 'gas', 'google-sheets-config.js');
     } else if (pathname === '/google-sheets-api.js') {
-      // Google Sheets APIライブラリ
-      filePath = join(__dirname, 'google-sheets-api.js');
+      // Google Sheets APIライブラリ -> infra/gas/
+      filePath = join(__dirname, 'infra', 'gas', 'google-sheets-api.js');
     } else if (pathname === '/gas-integration.js') {
-      // Google Apps Script連携ライブラリ
-      filePath = join(__dirname, 'gas-integration.js');
+      // Google Apps Script連携ライブラリ -> infra/gas/
+      filePath = join(__dirname, 'infra', 'gas', 'gas-integration.js');
     } else if (pathname === '/gas-script.js') {
-      // Google Apps Scriptコード
-      filePath = join(__dirname, 'gas-script.js');
+      // Google Apps Scriptコード -> infra/gas/
+      filePath = join(__dirname, 'infra', 'gas', 'gas-script.js');
     } else if (pathname.startsWith('/dist/')) {
       // 静的ファイル（dist フォルダから）
       filePath = join(__dirname, pathname);

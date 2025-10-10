@@ -42,22 +42,22 @@
     },
     {
       "source": "/gas-demo",
-      "destination": "/gas-demo.html",
+      "destination": "/demos/gas-demo.html",
       "permanent": false
     },
     {
       "source": "/gas-setup", 
-      "destination": "/gas-setup.html",
+      "destination": "/demos/gas-setup.html",
       "permanent": false
     },
     {
       "source": "/sheets-demo",
-      "destination": "/google-sheets-demo.html",
+      "destination": "/demos/google-sheets-demo.html",
       "permanent": false
     },
     {
       "source": "/sheets-setup",
-      "destination": "/google-sheets-setup.html", 
+      "destination": "/demos/google-sheets-setup.html", 
       "permanent": false
     }
   ],
