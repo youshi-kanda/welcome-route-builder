@@ -242,6 +242,12 @@ class GASIntegration {
             stepAnswers[`step${qNum}_answer`] = ans;
         });
         const ipAddress = await this.getUserIP();
+            // include normalized responses arrays for server-side fallback mapping
+            const normalizedResponses = responses.map((r, idx) => ({
+                questionNumber: r.questionNumber || (idx + 1),
+                question: r.question || r.questionText || '',
+                answer: r.answer || r.response || r.value || ''
+            }));
         return {
             // tolerate multiple name/phone field names from different flows
             applicantName: applicantData.name || applicantData.fullName || applicantData.applicantName || '',
@@ -270,6 +276,11 @@ class GASIntegration {
             language: navigator.language || 'ja',
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             notes: '事前確認完了'
+                ,
+                // send the normalized responses so GAS can fallback to them if stepN fields are empty
+                responses: normalizedResponses,
+                // also include a common alias used by demo pages
+                interview_responses: normalizedResponses
         };
     }
 
