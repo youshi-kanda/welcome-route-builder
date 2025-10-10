@@ -1,18 +1,23 @@
 /**
- * Google Apps Script (GAS) 連携ライブラリ
- * ALSOK採用システム専用
+ * Google Apps Script (GAS) 連携ライブラリ - Cloudflare Functions対応版
+ * ALSOK採用システム専用（CORS解決済み）
  */
 
 class GASIntegration {
     constructor() {
-        this.gasWebAppUrl = null;
-        this.isEnabled = false;
+        // 新しいAPIエンドポイント（CORS解決済み）
+        this.apiEndpoint = '/api/alsok';
+        this.gasWebAppUrl = null; // 後方互換性のため保持
+        this.isEnabled = true;
         this.connectionStatus = 'disconnected';
         this.maxRetries = 3;
         this.retryDelay = 2000; // 2秒
         
         // 設定読み込み
         this.loadConfiguration();
+        
+        // システム状態確認
+        this.checkSystemStatus();
     }
 
     /**
@@ -23,18 +28,30 @@ class GASIntegration {
             const savedConfig = localStorage.getItem('gas_integration_config');
             if (savedConfig) {
                 const config = JSON.parse(savedConfig);
-                this.gasWebAppUrl = config.webAppUrl;
+                // 新しい設定があれば優先
+                if (config.apiEndpoint) {
+                    this.apiEndpoint = config.apiEndpoint;
+                }
+                // 旧設定も保持（後方互換性）
+                if (config.webAppUrl) {
+                    this.gasWebAppUrl = config.webAppUrl;
+                }
                 this.isEnabled = config.enabled !== false;
             }
             
-            // 環境変数から読み込み（優先度高）
-            if (typeof window !== 'undefined' && window.GAS_WEB_APP_URL) {
-                this.gasWebAppUrl = window.GAS_WEB_APP_URL;
-                this.isEnabled = true;
+            // 環境変数から読み込み（最優先）
+            if (typeof window !== 'undefined') {
+                if (window.ALSOK_API_ENDPOINT) {
+                    this.apiEndpoint = window.ALSOK_API_ENDPOINT;
+                }
+                if (window.GAS_WEB_APP_URL) {
+                    this.gasWebAppUrl = window.GAS_WEB_APP_URL;
+                }
             }
             
             console.log('📊 GAS Integration設定:', {
-                url: this.gasWebAppUrl ? this.maskUrl(this.gasWebAppUrl) : '未設定',
+                endpoint: this.apiEndpoint,
+                legacyUrl: this.gasWebAppUrl ? this.maskUrl(this.gasWebAppUrl) : '未設定',
                 enabled: this.isEnabled
             });
         } catch (error) {
@@ -45,18 +62,20 @@ class GASIntegration {
     /**
      * 設定の保存
      */
-    saveConfiguration(webAppUrl, enabled = true) {
+    saveConfiguration(config = {}) {
         try {
-            const config = {
-                webAppUrl: webAppUrl?.trim(),
-                enabled: enabled,
+            const newConfig = {
+                apiEndpoint: config.apiEndpoint || this.apiEndpoint,
+                webAppUrl: config.webAppUrl || this.gasWebAppUrl,
+                enabled: config.enabled !== undefined ? config.enabled : this.isEnabled,
                 lastUpdated: new Date().toISOString()
             };
             
-            localStorage.setItem('gas_integration_config', JSON.stringify(config));
+            localStorage.setItem('gas_integration_config', JSON.stringify(newConfig));
             
-            this.gasWebAppUrl = config.webAppUrl;
-            this.isEnabled = config.enabled;
+            this.apiEndpoint = newConfig.apiEndpoint;
+            this.gasWebAppUrl = newConfig.webAppUrl;
+            this.isEnabled = newConfig.enabled;
             
             console.log('💾 GAS設定保存完了');
             return true;
@@ -67,7 +86,34 @@ class GASIntegration {
     }
 
     /**
-     * GAS Web App URLの検証
+     * システム状態確認
+     */
+    async checkSystemStatus() {
+        try {
+            console.log('🔧 ALSOK採用システム状態確認...');
+            
+            const response = await fetch(`${this.apiEndpoint}?action=status`);
+            const data = await response.json();
+            
+            if (data.success && data.status === 'ready') {
+                this.updateConnectionStatus('connected');
+                console.log('✅ ALSOK採用システム準備完了');
+                console.log(`📊 現在の応募者数: ${data.totalApplicants || 0}名`);
+                return true;
+            } else {
+                this.updateConnectionStatus('error');
+                console.warn('⚠️ システム準備中:', data.message);
+                return false;
+            }
+        } catch (error) {
+            this.updateConnectionStatus('error');
+            console.error('❌ システム確認エラー:', error);
+            return false;
+        }
+    }
+
+    /**
+     * GAS Web App URLの検証（後方互換性）
      */
     validateWebAppUrl(url) {
         const errors = [];
@@ -94,31 +140,24 @@ class GASIntegration {
      * 接続テスト
      */
     async testConnection() {
-        if (!this.gasWebAppUrl) {
-            return {
-                success: false,
-                message: 'Web App URLが設定されていません'
-            };
-        }
-        
         this.updateConnectionStatus('testing');
         
         try {
-            const testData = this.createTestData();
+            const testData = { test: true };
             const result = await this.sendDataWithRetry(testData, 1);
             
-            if (result.success) {
+            if (result.success && result.response?.testResult === 'PASS') {
                 this.updateConnectionStatus('connected');
                 return {
                     success: true,
-                    message: 'GAS連携テスト成功',
+                    message: 'ALSOK採用システム接続成功',
                     response: result.response
                 };
             } else {
                 this.updateConnectionStatus('error');
                 return {
                     success: false,
-                    message: 'GAS連携テスト失敗: ' + result.message
+                    message: 'ALSOK採用システム接続失敗: ' + (result.message || 'Unknown error')
                 };
             }
         } catch (error) {
@@ -143,19 +182,11 @@ class GASIntegration {
             };
         }
         
-        if (!this.gasWebAppUrl) {
-            console.warn('⚠️ GAS Web App URL未設定');
-            return {
-                success: false,
-                message: 'GAS Web App URLが設定されていません'
-            };
-        }
-        
         this.updateConnectionStatus('sending');
         
         try {
             // データフォーマット
-            const formattedData = this.formatDataForGAS(applicantData);
+            const formattedData = await this.formatDataForGAS(applicantData);
             
             // 送信実行
             const result = await this.sendDataWithRetry(formattedData);
@@ -168,6 +199,8 @@ class GASIntegration {
                     success: true,
                     message: 'スプレッドシートに正常に送信されました',
                     response: result.response,
+                    rowNumber: result.response?.rowNumber,
+                    qualificationStatus: result.response?.qualificationStatus,
                     spreadsheetUrl: result.response?.spreadsheetUrl
                 };
             } else {
@@ -199,7 +232,7 @@ class GASIntegration {
         
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
-                console.log(`📤 GAS送信試行 ${attempt}/${retries}`);
+                console.log(`📤 GAS送信試行 ${attempt}/${retries} → ${this.apiEndpoint}`);
                 
                 const response = await this.sendToGAS(data);
                 
@@ -233,16 +266,15 @@ class GASIntegration {
     }
 
     /**
-     * GASへのHTTP POST送信
+     * GASへのHTTP POST送信（Cloudflare Functions経由、CORS解決済み）
      */
     async sendToGAS(data) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒タイムアウト
         
         try {
-            const response = await fetch(this.gasWebAppUrl, {
+            const response = await fetch(this.apiEndpoint, {
                 method: 'POST',
-                mode: 'cors',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -265,7 +297,7 @@ class GASIntegration {
             if (error.name === 'AbortError') {
                 throw new Error('リクエストがタイムアウトしました');
             } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                throw new Error('ネットワーク接続エラー - GAS URLを確認してください');
+                throw new Error('ネットワーク接続エラー - システム管理者にお問い合わせください');
             } else {
                 throw error;
             }
@@ -275,7 +307,7 @@ class GASIntegration {
     /**
      * 応募者データをGAS形式にフォーマット
      */
-    formatDataForGAS(applicantData) {
+    async formatDataForGAS(applicantData) {
         const responses = applicantData.responses || [];
         
         // 11ステップの回答を取得
@@ -286,12 +318,15 @@ class GASIntegration {
             }
         });
         
+        // IPアドレス取得（非同期）
+        const ipAddress = await this.getUserIP();
+        
         // GAS用データ構造
         return {
             // 基本情報
             applicantName: applicantData.name || '',
             phoneNumber: applicantData.phone || '',
-            applicationSource: applicantData.source || 'モバイル応募',
+            applicationSource: applicantData.source || 'AI面接チャットbot',
             
             // 11ステップの回答
             step1_answer: stepAnswers.step1_answer || '',
@@ -312,11 +347,11 @@ class GASIntegration {
             completionTime: applicantData.interviewCompletedAt ? 
                 new Date(applicantData.interviewCompletedAt).toLocaleString('ja-JP', {
                     timeZone: 'Asia/Tokyo'
-                }) : '',
+                }) : new Date().toISOString(),
             
             // 技術情報
             deviceType: this.getDeviceType(),
-            ipAddress: applicantData.ipAddress || '',
+            ipAddress: ipAddress,
             userAgent: navigator.userAgent || '',
             sessionId: applicantData.id || this.generateSessionId(),
             referrer: document.referrer || '',
@@ -325,6 +360,19 @@ class GASIntegration {
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             notes: '事前確認完了'
         };
+    }
+
+    /**
+     * ユーザーIPアドレス取得
+     */
+    async getUserIP() {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip;
+        } catch (error) {
+            return applicantData.ipAddress || 'unknown';
+        }
     }
 
     /**
@@ -348,7 +396,7 @@ class GASIntegration {
             step11_answer: '特にありません（テスト）',
             disqualificationStatus: '適格',
             overallResult: 'GAS連携テスト',
-            completionTime: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
+            completionTime: new Date().toISOString(),
             deviceType: this.getDeviceType(),
             ipAddress: 'TEST_IP',
             userAgent: navigator.userAgent,
@@ -372,12 +420,43 @@ class GASIntegration {
             detail: {
                 status: status,
                 timestamp: new Date().toISOString(),
+                endpoint: this.apiEndpoint,
                 url: this.gasWebAppUrl ? this.maskUrl(this.gasWebAppUrl) : null
             }
         });
         document.dispatchEvent(event);
         
+        // UI更新
+        this.updateUI(status);
+        
         console.log('📊 GAS接続状態更新:', status);
+    }
+
+    /**
+     * UI更新
+     */
+    updateUI(status) {
+        const statusMap = {
+            'connected': { text: '✅ 設定済み', color: '#28a745' },
+            'testing': { text: '🔄 テスト中', color: '#17a2b8' },
+            'sending': { text: '📤 送信中', color: '#ffc107' },
+            'success': { text: '✅ 送信完了', color: '#28a745' },
+            'error': { text: '❌ エラー', color: '#dc3545' },
+            'disconnected': { text: '⚠️ 未接続', color: '#6c757d' }
+        };
+        
+        const statusInfo = statusMap[status] || statusMap['disconnected'];
+        
+        // 複数の表示要素に対応
+        const selectors = ['.gas-status', '[data-gas-status]', '#gas-status'];
+        
+        selectors.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(element => {
+                element.textContent = statusInfo.text;
+                element.style.color = statusInfo.color;
+            });
+        });
     }
 
     /**
@@ -386,8 +465,9 @@ class GASIntegration {
     getStatus() {
         return {
             isEnabled: this.isEnabled,
-            hasUrl: !!this.gasWebAppUrl,
+            hasUrl: !!this.apiEndpoint,
             connectionStatus: this.connectionStatus,
+            endpoint: this.apiEndpoint,
             url: this.gasWebAppUrl ? this.maskUrl(this.gasWebAppUrl) : null
         };
     }
@@ -434,7 +514,8 @@ class GASIntegration {
     resetConfiguration() {
         localStorage.removeItem('gas_integration_config');
         this.gasWebAppUrl = null;
-        this.isEnabled = false;
+        this.apiEndpoint = '/api/alsok';
+        this.isEnabled = true;
         this.connectionStatus = 'disconnected';
         console.log('🗑️ GAS設定をリセットしました');
     }
@@ -482,7 +563,7 @@ class GASIntegration {
             step11_answer: '特にありません',
             disqualificationStatus: '適格',
             overallResult: '面接実施予定',
-            completionTime: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
+            completionTime: new Date().toISOString(),
             deviceType: this.getDeviceType(),
             ipAddress: `192.168.1.${100 + index}`,
             userAgent: navigator.userAgent,
@@ -508,8 +589,8 @@ function initializeGASIntegration(config = {}) {
     }
     
     // 設定が提供された場合は保存
-    if (config.webAppUrl) {
-        gasIntegration.saveConfiguration(config.webAppUrl, config.enabled);
+    if (config.webAppUrl || config.apiEndpoint || config.enabled !== undefined) {
+        gasIntegration.saveConfiguration(config);
     }
     
     return gasIntegration;
@@ -547,6 +628,20 @@ function getGASStatus() {
     
     return gasIntegration.getStatus();
 }
+
+// システム初期化
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🛡️ ALSOK採用システム起動中...');
+    initializeGASIntegration();
+});
+
+// グローバルオブジェクトとして公開
+window.ALSOK = {
+    submit: submitToGAS,
+    test: testGASConnection,
+    status: getGASStatus,
+    init: initializeGASIntegration
+};
 
 // モジュールエクスポート
 if (typeof module !== 'undefined' && module.exports) {
