@@ -363,7 +363,7 @@ class GASIntegration {
     }
 
     /**
-     * ユーザーIPアドレス取得
+     * ユーザーIPアドレス取得（修正版）
      */
     async getUserIP() {
         try {
@@ -371,7 +371,7 @@ class GASIntegration {
             const data = await response.json();
             return data.ip;
         } catch (error) {
-            return applicantData.ipAddress || 'unknown';
+            return 'unknown'; // 修正: 未定義変数参照を削除
         }
     }
 
@@ -435,6 +435,9 @@ class GASIntegration {
     /**
      * UI更新
      */
+    /**
+ * UI更新（修正版）
+ */
     updateUI(status) {
         const statusMap = {
             'connected': { text: '✅ 設定済み', color: '#28a745' },
@@ -447,9 +450,8 @@ class GASIntegration {
         
         const statusInfo = statusMap[status] || statusMap['disconnected'];
         
-        // 複数の表示要素に対応
+        // GAS連携ステータスの更新
         const selectors = ['.gas-status', '[data-gas-status]', '#gas-status'];
-        
         selectors.forEach(selector => {
             const elements = document.querySelectorAll(selector);
             elements.forEach(element => {
@@ -457,7 +459,19 @@ class GASIntegration {
                 element.style.color = statusInfo.color;
             });
         });
+
+        // 🔧 修正: Google Sheetsステータスも状態に応じて更新
+        if (status === 'connected' || status === 'success') {
+            setGoogleSheetsStatus('✅ GAS経由で保存', '#28a745');
+        } else if (status === 'error') {
+            setGoogleSheetsStatus('❌ 接続エラー', '#dc3545');
+        } else if (status === 'testing' || status === 'sending') {
+            setGoogleSheetsStatus('🔄 処理中', '#17a2b8');
+        } else {
+            setGoogleSheetsStatus('⚠️ 未設定', '#6c757d');
+        }
     }
+
 
     /**
      * 現在の状態取得
@@ -653,3 +667,18 @@ if (typeof module !== 'undefined' && module.exports) {
         getGASStatus
     };
 }
+
+/**
+ * Google Sheetsステータス表示の更新
+ */
+function setGoogleSheetsStatus(text = '✅ GAS経由で保存', color = '#28a745') {
+    const selectors = ['.gs-status', '[data-gs-status]', '#gs-status', '.google-sheets-status'];
+    selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+            element.textContent = text;
+            element.style.color = color;
+        });
+    });
+}
+
