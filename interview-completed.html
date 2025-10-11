@@ -787,6 +787,17 @@
                 return;
             }
 
+            // Ensure applicantData includes the latest responses from storage
+            try {
+                const latestApplicant = window.alsokStorage.getApplicant(applicantId);
+                if (latestApplicant && latestApplicant.responses) {
+                    applicantData.responses = latestApplicant.responses;
+                    console.log('📋 応募者回答を取得:', applicantData.responses.length, '件');
+                }
+            } catch (e) {
+                console.warn('⚠️ 応募者データ取得エラー:', e);
+            }
+
             const statusElement = document.getElementById('gas-status');
             if (statusElement) {
                 statusElement.innerHTML = '<span class="gas-status sending">📤 送信中...</span>';
