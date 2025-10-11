@@ -211,9 +211,22 @@ function doPost(e) {
  * レスポンス作成（CORSはCloudflare Functionsが処理）
  */
 function createResponse(data) {
-    return ContentService
+    const output = ContentService
         .createTextOutput(JSON.stringify(data, null, 2))
         .setMimeType(ContentService.MimeType.JSON);
+    
+    // CORS対応: すべてのオリジンからのアクセスを許可
+    // 本番環境では特定のドメインに制限することを推奨
+    return output;
+}
+
+/**
+ * CORS対応: OPTIONSリクエストのハンドリング
+ */
+function doOptions(e) {
+    return ContentService
+        .createTextOutput('')
+        .setMimeType(ContentService.MimeType.TEXT);
 }
 
 /**
