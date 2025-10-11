@@ -200,7 +200,7 @@ class AlsokPDFExporter {
                     }
                     break;
                     
-                case 6: // Q6: 意気込み・アピール（テキスト）
+                case 6: // Q6: 経験・スキル・資格（テキスト）
                     answer = response.answer || '';
                     break;
                     

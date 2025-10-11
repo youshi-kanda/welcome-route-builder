@@ -8,7 +8,7 @@ const LOG_SHEET_NAME = 'システムログ';
 const COLUMN_MAPPING = {
     A: '応募日時', B: '応募者名', C: '電話番号', D: '応募経路',
     E: 'Q1_応募経路詳細', F: 'Q2_欠格事由確認', G: 'Q3_勤務期間希望', H: 'Q4_志望動機・応募理由',
-    I: 'Q5_体力面・業務対応', J: 'Q6_意気込み・アピール', K: 'Q7_仕事内容理解度', L: 'Q8_責任の重さ認識',
+    I: 'Q5_体力面・業務対応', J: 'Q6_経験・スキル・資格', K: 'Q7_仕事内容理解度', L: 'Q8_責任の重さ認識',
     M: 'Q9_研修・資格意欲', N: 'Q10_重視する点', O: 'Q11_他社検討状況', P: 'Q12_面接準備・質問',
     Q: '適格性判定', R: '総合結果', S: '完了時間', T: 'デバイス種別',
     U: 'IPアドレス', V: 'ユーザーエージェント', W: 'セッションID',
@@ -486,6 +486,14 @@ function determineQualificationStatus(data) {
         if (answer.includes('一部対応困難') || answer.includes('困難')) return '業務適合性要検討';
     }
     
+    // Q6: 経験・スキル評価（加点要素）
+    if (data.step6_answer) {
+        const answer = String(data.step6_answer).toLowerCase();
+        if (answer.includes('免許') || answer.includes('資格') || answer.includes('経験') || answer.includes('年')) {
+            // 具体的な経験・資格記載は加点対象（判定には影響させない）
+        }
+    }
+    
     // 記述式質問の内容評価（Q4, Q6, Q8, Q12）
     const textAnswers = [data.step4_answer, data.step6_answer, data.step8_answer, data.step12_answer];
     const emptyAnswers = textAnswers.filter(answer => !answer || String(answer).trim().length < 10);
@@ -563,7 +571,7 @@ function addTestData() {
             step3_answer: '1年以上の長期勤務を希望',
             step4_answer: '人の安全を守る仕事に使命感を感じ、ALSOKの信頼性と実績に魅力を感じたため',
             step5_answer: '上記すべて対応可能',
-            step6_answer: '責任感を持って地域の安全に貢献したい',
+            step6_answer: '接客業経験3年、普通自動車免許、コミュニケーション能力に自信あり',
             step7_answer: 'よく知っている',
             step8_answer: '重大な責任だと理解しており、しっかりと取り組みたい',
             step9_answer: '積極的に取り組みたい',
