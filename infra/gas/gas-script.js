@@ -427,7 +427,7 @@ function addInterviewData(data) {
         data.step3_answer || '', // G: Q3_勤務期間希望
         data.step4_answer || '', // H: Q4_志望動機・応募理由
         data.step5_answer || '', // I: Q5_体力面・業務対応
-        data.step6_answer || '', // J: Q6_意気込み・アピール
+        data.step6_answer || '', // J: Q6_経験・スキル・資格
         data.step7_answer || '', // K: Q7_仕事内容理解度
         data.step8_answer || '', // L: Q8_責任の重さ認識
         data.step9_answer || '', // M: Q9_研修・資格意欲

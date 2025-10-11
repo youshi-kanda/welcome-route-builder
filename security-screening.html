@@ -825,12 +825,12 @@
             
             // ステータス更新
             window.alsokStorage.updateApplicant(applicantId, {
-                status: nextAction === 'qualified' ? 'interview_completed' : 'disqualified',
+                status: 'screening_completed',
                 screeningCompletedAt: new Date().toISOString()
             });
             
             screeningStatus.textContent = '事前精査完了';
-            setProcessing(false, nextAction);
+            setProcessing(false);
             
             // 次画面へのリダイレクト
             setTimeout(() => {
