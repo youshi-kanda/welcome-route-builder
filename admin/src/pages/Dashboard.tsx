@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Search, Filter, RefreshCw, UserCheck, Clock, CheckCircle2, Eye, Edit, Calendar } from 'lucide-react'
+import { Search, Filter, RefreshCw, UserCheck, Clock, CheckCircle2, Eye, Edit, Calendar, Send } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,7 @@ import {
 import { ApplicantDetailModal } from '@/components/ApplicantDetailModal'
 import { StatusUpdateModal } from '@/components/StatusUpdateModal'
 import { InterviewScheduleModal } from '@/components/InterviewScheduleModal'
+import { NotificationModal } from '@/components/NotificationModal'
 import { getApplicants, mockApplicants } from '@/lib/api'
 import { formatDate, formatPhoneNumber, getStatusColor, getStatusLabel } from '@/lib/utils'
 import type { Applicant, ApplicantFilters } from '@/types/applicant'
@@ -38,6 +39,7 @@ export default function Dashboard() {
   const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [statusModalOpen, setStatusModalOpen] = useState(false)
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
+  const [notificationModalOpen, setNotificationModalOpen] = useState(false)
 
   const { data: applicants, isLoading, refetch } = useQuery({
     queryKey: ['applicants', filters],
@@ -70,6 +72,11 @@ export default function Dashboard() {
   const handleScheduleInterview = (applicant: Applicant) => {
     setSelectedApplicant(applicant)
     setScheduleModalOpen(true)
+  }
+
+  const handleSendNotification = (applicant: Applicant) => {
+    setSelectedApplicant(applicant)
+    setNotificationModalOpen(true)
   }
 
   return (
@@ -256,6 +263,18 @@ export default function Dashboard() {
                             面接
                           </Button>
                         )}
+                        {(applicant.status === 'qualified' || 
+                          applicant.status === 'interview_scheduled' || 
+                          applicant.status === 'disqualified') && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSendNotification(applicant)}
+                          >
+                            <Send className="h-4 w-4 mr-1" />
+                            通知
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -287,6 +306,11 @@ export default function Dashboard() {
         applicant={selectedApplicant}
         open={scheduleModalOpen}
         onOpenChange={setScheduleModalOpen}
+      />
+      <NotificationModal
+        applicant={selectedApplicant}
+        open={notificationModalOpen}
+        onOpenChange={setNotificationModalOpen}
       />
     </div>
   )

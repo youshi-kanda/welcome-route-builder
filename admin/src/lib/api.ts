@@ -134,9 +134,9 @@ export async function cancelInterview(
 // 通知送信
 export async function sendNotification(
   applicantId: string,
-  type: 'email' | 'sms',
-  template: string
-): Promise<{ success: boolean }> {
+  notificationType: 'qualified' | 'rejected' | 'interview_reminder',
+  channel: 'email' | 'sms' | 'both'
+): Promise<{ success: boolean; message: string }> {
   const response = await fetch(API_BASE_URL, {
     method: 'POST',
     headers: {
@@ -145,9 +145,13 @@ export async function sendNotification(
     body: JSON.stringify({
       action: 'sendNotification',
       applicantId,
-      type,
-      template,
+      type: notificationType,
+      channel,
     }),
+  })
+  
+  return handleResponse<{ success: boolean; message: string }>(response)
+}
   })
   
   return handleResponse<{ success: boolean }>(response)

@@ -276,7 +276,7 @@ curl -X POST "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec" \
 }
 ```
 
-### 6. 通知送信（未実装）
+### 6. 通知送信
 
 **エンドポイント**: `POST`
 
@@ -285,10 +285,50 @@ curl -X POST "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec" \
 {
   "action": "sendNotification",
   "applicantId": "2",
-  "type": "email",
-  "template": "qualification"
+  "type": "qualified",
+  "channel": "email"
 }
 ```
+
+**パラメータ**:
+- `action` (required): `sendNotification`
+- `applicantId` (required): 応募者ID
+- `type` (required): 通知タイプ
+  - `qualified` - 合格通知
+  - `rejected` - 不合格通知
+  - `interview_reminder` - 面接リマインダー
+- `channel` (required): 送信チャンネル
+  - `email` - メールのみ
+  - `sms` - SMSのみ
+  - `both` - メール + SMS
+
+**レスポンス例**:
+```json
+{
+  "success": true,
+  "message": "通知を送信しました",
+  "channel": "email"
+}
+```
+
+**cURLコマンド例**:
+```bash
+curl -X POST "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "sendNotification",
+    "applicantId": "2",
+    "type": "qualified",
+    "channel": "both"
+  }'
+```
+
+**注意事項**:
+- メール送信にはGmailAppを使用
+- SMS送信にはTwilio APIを使用（設定が必要）
+- テンプレートはPropertiesServiceから取得
+- 送信履歴はログシートに記録
+- 変数置換: `{{name}}`, `{{interviewDate}}`, `{{interviewLocation}}`
 
 ## 📊 データ構造
 

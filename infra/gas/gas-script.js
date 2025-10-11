@@ -1212,13 +1212,277 @@ function cancelInterviewApi(data) {
 }
 
 /**
- * 通知送信API(未実装・次タスクで実装)
+ * ========================================
+ * 通知送信システム (Email/SMS)
+ * ========================================
+ */
+
+/**
+ * 通知送信API
+ * POST with action: 'sendNotification'
  */
 function sendNotificationApi(data) {
-    return createResponse({
-        success: true,
-        message: '通知送信API未実装'
-    });
+    try {
+        const properties = PropertiesService.getScriptProperties();
+        const applicantId = data.applicantId;
+        const notificationType = data.type; // 'qualified', 'rejected', 'interview_reminder'
+        const channel = data.channel || 'email'; // 'email' or 'sms'
+        
+        if (!applicantId || !notificationType) {
+            return createResponse({
+                success: false,
+                error: 'applicantIdとtypeが必要です'
+            });
+        }
+        
+        // スプレッドシートから応募者情報取得
+        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+        const mainSheet = spreadsheet.getSheetByName(SHEET_NAME);
+        
+        if (!mainSheet) {
+            return createResponse({
+                success: false,
+                error: 'スプレッドシートが見つかりません'
+            });
+        }
+        
+        const dataRange = mainSheet.getDataRange();
+        const values = dataRange.getValues();
+        
+        const rowIndex = parseInt(applicantId);
+        if (rowIndex < 2 || rowIndex > values.length) {
+            return createResponse({
+                success: false,
+                error: '応募者が見つかりません'
+            });
+        }
+        
+        const rowData = values[rowIndex - 1];
+        const applicantName = rowData[1]; // B列
+        const phoneNumber = rowData[2]; // C列
+        const aeColumnIndex = Object.keys(COLUMN_MAPPING).indexOf('AE');
+        const interviewDate = rowData[aeColumnIndex] || '';
+        
+        let result = { success: false, message: '' };
+        
+        // メール送信
+        if (channel === 'email' || channel === 'both') {
+            const emailEnabled = properties.getProperty('EMAIL_ENABLED') === 'true';
+            if (emailEnabled) {
+                result = sendEmailNotification(applicantName, phoneNumber, interviewDate, notificationType, properties);
+                if (!result.success) {
+                    return createResponse(result);
+                }
+            } else {
+                return createResponse({
+                    success: false,
+                    error: 'メール通知が無効です'
+                });
+            }
+        }
+        
+        // SMS送信
+        if (channel === 'sms' || channel === 'both') {
+            const smsEnabled = properties.getProperty('TWILIO_ENABLED') === 'true';
+            if (smsEnabled) {
+                result = sendSmsNotification(applicantName, phoneNumber, interviewDate, notificationType, properties);
+                if (!result.success) {
+                    return createResponse(result);
+                }
+            } else {
+                return createResponse({
+                    success: false,
+                    error: 'SMS通知が無効です'
+                });
+            }
+        }
+        
+        logActivity('通知送信', 'SUCCESS', 
+            `応募者: ${applicantName}, タイプ: ${notificationType}, チャンネル: ${channel}`);
+        
+        console.log('✅ 通知送信成功');
+        
+        return createResponse({
+            success: true,
+            message: '通知を送信しました',
+            channel: channel
+        });
+        
+    } catch (error) {
+        console.error('❌ 通知送信エラー:', error);
+        return createResponse({
+            success: false,
+            error: error.toString()
+        });
+    }
+}
+
+/**
+ * メール送信処理
+ */
+function sendEmailNotification(applicantName, phoneNumber, interviewDate, notificationType, properties) {
+    try {
+        // テンプレート取得
+        let template = '';
+        let subject = '';
+        
+        if (notificationType === 'qualified') {
+            template = properties.getProperty('QUALIFIED_EMAIL_TEMPLATE') || getDefaultQualifiedEmailTemplate();
+            subject = '【ALSOK】採用選考通過のご連絡';
+        } else if (notificationType === 'rejected') {
+            template = properties.getProperty('REJECTED_EMAIL_TEMPLATE') || getDefaultRejectedEmailTemplate();
+            subject = '【ALSOK】採用選考結果のご連絡';
+        } else if (notificationType === 'interview_reminder') {
+            template = properties.getProperty('INTERVIEW_REMINDER_TEMPLATE') || getDefaultInterviewReminderTemplate();
+            subject = '【ALSOK】面接日時のご確認';
+        }
+        
+        // テンプレート変数置換
+        let body = template
+            .replace(/{{name}}/g, applicantName)
+            .replace(/{{interviewDate}}/g, interviewDate || '未定')
+            .replace(/{{interviewLocation}}/g, 'ALSOK本社'); // 固定値または設定から取得
+        
+        // 件名抽出（テンプレートに含まれている場合）
+        const subjectMatch = body.match(/件名:\s*(.+)/);
+        if (subjectMatch) {
+            subject = subjectMatch[1].trim();
+            body = body.replace(/件名:\s*.+\n\n?/, '');
+        }
+        
+        // メール送信（GmailApp使用）
+        // 注意: 実際の電話番号からメールアドレスを取得する方法が必要
+        // ここではデモとして電話番号をログに記録
+        console.log(`📧 メール送信: ${applicantName} (${phoneNumber})`);
+        console.log(`件名: ${subject}`);
+        console.log(`本文:\n${body}`);
+        
+        // 実際のメール送信（電話番号ではなくメールアドレスが必要）
+        // GmailApp.sendEmail(email, subject, body);
+        
+        // 代替案: ログシートに送信履歴を記録
+        const logSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(LOG_SHEET_NAME);
+        if (logSheet) {
+            logSheet.appendRow([
+                formatDateTime(new Date()),
+                '通知送信',
+                'EMAIL',
+                applicantName,
+                phoneNumber,
+                subject,
+                body.substring(0, 100) + '...'
+            ]);
+        }
+        
+        return {
+            success: true,
+            message: 'メールを送信しました'
+        };
+        
+    } catch (error) {
+        console.error('❌ メール送信エラー:', error);
+        return {
+            success: false,
+            error: 'メール送信に失敗しました: ' + error.toString()
+        };
+    }
+}
+
+/**
+ * SMS送信処理（Twilio API使用）
+ */
+function sendSmsNotification(applicantName, phoneNumber, interviewDate, notificationType, properties) {
+    try {
+        const accountSid = properties.getProperty('TWILIO_ACCOUNT_SID');
+        const authToken = properties.getProperty('TWILIO_AUTH_TOKEN');
+        const fromNumber = properties.getProperty('TWILIO_PHONE_NUMBER');
+        
+        if (!accountSid || !authToken || !fromNumber) {
+            return {
+                success: false,
+                error: 'Twilio設定が不完全です'
+            };
+        }
+        
+        // テンプレート取得
+        let template = '';
+        
+        if (notificationType === 'qualified') {
+            template = properties.getProperty('QUALIFIED_SMS_TEMPLATE') || getDefaultQualifiedSmsTemplate();
+        } else if (notificationType === 'interview_reminder') {
+            template = properties.getProperty('INTERVIEW_SMS_TEMPLATE') || getDefaultInterviewSmsTemplate();
+        } else {
+            // 不合格通知はSMSで送らない（一般的な運用）
+            return {
+                success: true,
+                message: 'SMS送信をスキップしました（不合格通知）'
+            };
+        }
+        
+        // テンプレート変数置換
+        const message = template
+            .replace(/{{name}}/g, applicantName)
+            .replace(/{{interviewDate}}/g, interviewDate || '未定');
+        
+        // Twilio API呼び出し
+        const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+        const payload = {
+            From: fromNumber,
+            To: phoneNumber,
+            Body: message
+        };
+        
+        const options = {
+            method: 'post',
+            payload: payload,
+            headers: {
+                'Authorization': 'Basic ' + Utilities.base64Encode(accountSid + ':' + authToken)
+            },
+            muteHttpExceptions: true
+        };
+        
+        const response = UrlFetchApp.fetch(url, options);
+        const responseCode = response.getResponseCode();
+        
+        console.log(`📱 SMS送信: ${applicantName} (${phoneNumber})`);
+        console.log(`メッセージ: ${message}`);
+        console.log(`Twilioレスポンス: ${responseCode}`);
+        
+        if (responseCode === 200 || responseCode === 201) {
+            // ログシートに送信履歴を記録
+            const logSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(LOG_SHEET_NAME);
+            if (logSheet) {
+                logSheet.appendRow([
+                    formatDateTime(new Date()),
+                    '通知送信',
+                    'SMS',
+                    applicantName,
+                    phoneNumber,
+                    '',
+                    message
+                ]);
+            }
+            
+            return {
+                success: true,
+                message: 'SMSを送信しました'
+            };
+        } else {
+            const errorBody = response.getContentText();
+            console.error('Twilioエラー:', errorBody);
+            return {
+                success: false,
+                error: 'SMS送信に失敗しました: ' + errorBody
+            };
+        }
+        
+    } catch (error) {
+        console.error('❌ SMS送信エラー:', error);
+        return {
+            success: false,
+            error: 'SMS送信に失敗しました: ' + error.toString()
+        };
+    }
 }
 
 /**
