@@ -1,13 +1,13 @@
 /**
  * ALSOK採用システム - PDF出力機能
- * 事前確認データをPDF形式でエクスポート
+ * 事前確認データをPDF形式でエクスポート（日本語対応版）
  */
 
 class AlsokPDFExporter {
     constructor() {
-        // jsPDFライブラリの読み込み確認
-        this.jsPDFLoaded = false;
-        this.loadJsPDF();
+        // html2canvasとjsPDFライブラリの読み込み確認
+        this.librariesLoaded = false;
+        this.loadLibraries();
 
         // データマッピング定義（CSV出力と同じ）
         this.sourceMapping = {
@@ -74,22 +74,25 @@ class AlsokPDFExporter {
     }
 
     /**
-     * jsPDFライブラリの動的読み込み
+     * html2canvasとjsPDFライブラリの動的読み込み
      */
-    async loadJsPDF() {
-        if (typeof window.jspdf !== 'undefined') {
-            this.jsPDFLoaded = true;
+    async loadLibraries() {
+        if (typeof window.jspdf !== 'undefined' && typeof window.html2canvas !== 'undefined' && this.librariesLoaded) {
             return;
         }
 
         try {
-            // jsPDFとフォントライブラリを読み込み
+            // html2canvasを読み込み（HTMLをCanvasに変換するため）
+            await this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+            
+            // jsPDF本体を読み込み
             await this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-            this.jsPDFLoaded = true;
-            console.log('jsPDF loaded successfully');
+            
+            this.librariesLoaded = true;
+            console.log('html2canvas and jsPDF loaded successfully');
         } catch (error) {
-            console.error('Failed to load jsPDF:', error);
-            this.jsPDFLoaded = false;
+            console.error('Failed to load PDF libraries:', error);
+            this.librariesLoaded = false;
         }
     }
 
@@ -235,135 +238,150 @@ class AlsokPDFExporter {
         return processedResponses;
     }
 
+
+
     /**
-     * PDFテキストの自動折り返し
+     * HTML要素を作成してPDF生成
      */
-    splitTextToLines(doc, text, maxWidth) {
-        if (!text) return [''];
-        const lines = doc.splitTextToSize(text, maxWidth);
-        return Array.isArray(lines) ? lines : [lines];
+    async generatePDF(applicant) {
+        if (!this.librariesLoaded) {
+            await this.loadLibraries();
+        }
+
+        if (!this.librariesLoaded || typeof window.jspdf === 'undefined' || typeof window.html2canvas === 'undefined') {
+            throw new Error('PDFライブラリの読み込みに失敗しました');
+        }
+
+        // HTML要素を作成
+        const htmlContent = this.generateHTMLContent(applicant);
+        
+        // 一時的なコンテナを作成
+        const container = document.createElement('div');
+        container.innerHTML = htmlContent;
+        container.style.position = 'absolute';
+        container.style.left = '-9999px';
+        container.style.top = '0';
+        container.style.width = '794px'; // A4幅（72dpi基準）
+        container.style.padding = '40px';
+        container.style.fontFamily = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif';
+        container.style.fontSize = '14px';
+        container.style.lineHeight = '1.6';
+        container.style.color = '#333';
+        container.style.backgroundColor = '#fff';
+        
+        document.body.appendChild(container);
+
+        try {
+            // HTML要素をCanvasに変換
+            const canvas = await window.html2canvas(container, {
+                scale: 2, // 高解像度
+                backgroundColor: '#ffffff',
+                logging: false,
+                useCORS: true
+            });
+
+            // PDFを作成
+            const { jsPDF } = window.jspdf;
+            const imgWidth = 210; // A4幅（mm）
+            const pageHeight = 295; // A4高さ（mm）
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+
+            const doc = new jsPDF('p', 'mm', 'a4');
+            let position = 0;
+
+            // 画像をPDFに追加
+            doc.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            // 複数ページに分割
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                doc.addPage();
+                doc.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            return doc;
+        } finally {
+            // 一時的なコンテナを削除
+            document.body.removeChild(container);
+        }
     }
 
     /**
-     * PDF生成
+     * HTML形式のコンテンツを生成
      */
-    async generatePDF(applicant) {
-        if (!this.jsPDFLoaded) {
-            await this.loadJsPDF();
-        }
-
-        if (!this.jsPDFLoaded || typeof window.jspdf === 'undefined') {
-            throw new Error('jsPDFライブラリの読み込みに失敗しました');
-        }
-
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
-        });
-
-        let yPosition = 20;
-        const leftMargin = 20;
-        const rightMargin = 190;
-        const lineHeight = 7;
-        const sectionSpacing = 10;
-
-        // タイトル
-        doc.setFontSize(18);
-        doc.setFont(undefined, 'bold');
-        doc.text('ALSOK 事前確認データ', leftMargin, yPosition);
-        yPosition += sectionSpacing + 5;
-
-        // 生成日時
-        doc.setFontSize(10);
-        doc.setFont(undefined, 'normal');
-        doc.text(`出力日時: ${this.formatDateTime(new Date())}`, leftMargin, yPosition);
-        yPosition += sectionSpacing;
-
-        // 基本情報セクション
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
-        doc.text('基本情報', leftMargin, yPosition);
-        yPosition += lineHeight;
-        
-        doc.setFontSize(10);
-        doc.setFont(undefined, 'normal');
-        
-        const basicInfo = [
-            { label: '応募者名', value: applicant.name || '' },
-            { label: '電話番号', value: applicant.phone || '' },
-            { label: '応募経路', value: this.sourceMapping[applicant.applicationSource] || '' },
-            { label: '登録日時', value: this.formatDateTime(applicant.createdAt) },
-            { label: '事前確認完了', value: this.formatDateTime(applicant.screeningCompletedAt) },
-            { label: '所要時間', value: this.calculateDuration(applicant.screeningStartedAt, applicant.screeningCompletedAt) },
-            { label: '法的適格性', value: this.determineLegalStatus(applicant.disqualificationReasons || []) }
-        ];
-
-        basicInfo.forEach(item => {
-            doc.setFont(undefined, 'bold');
-            doc.text(`${item.label}:`, leftMargin, yPosition);
-            doc.setFont(undefined, 'normal');
-            doc.text(item.value, leftMargin + 40, yPosition);
-            yPosition += lineHeight;
-        });
-
-        yPosition += sectionSpacing;
-
-        // 事前確認回答セクション
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
-        doc.text('事前確認回答', leftMargin, yPosition);
-        yPosition += lineHeight + 2;
-
+    generateHTMLContent(applicant) {
         const responses = this.processScreeningResponses(applicant.screeningResponses || []);
+        const duration = this.calculateDuration(applicant.screeningStartedAt, applicant.screeningCompletedAt);
+        const legalStatus = this.determineLegalStatus(applicant.disqualificationReasons || []);
         
-        doc.setFontSize(10);
-        responses.forEach((response, index) => {
-            // ページ終端チェック
-            if (yPosition > 270) {
-                doc.addPage();
-                yPosition = 20;
-            }
+        return `
+            <div style="max-width: 700px; margin: 0 auto;">
+                <h1 style="text-align: center; color: #003DA5; border-bottom: 3px solid #003DA5; padding-bottom: 10px; margin-bottom: 30px;">
+                    ALSOK 事前確認データ
+                </h1>
+                
+                <div style="text-align: right; font-size: 12px; color: #666; margin-bottom: 30px;">
+                    出力日時: ${this.formatDateTime(new Date())}
+                </div>
 
-            // 質問
-            doc.setFont(undefined, 'bold');
-            const questionLines = this.splitTextToLines(doc, `Q${response.step}. ${response.question}`, rightMargin - leftMargin);
-            questionLines.forEach(line => {
-                doc.text(line, leftMargin, yPosition);
-                yPosition += lineHeight;
-            });
+                <h2 style="background: #f8f9fa; padding: 12px; margin: 20px 0 15px 0; border-left: 4px solid #003DA5; font-size: 16px;">
+                    基本情報
+                </h2>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold; width: 30%;">応募者名</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${applicant.name || ''}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">電話番号</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${applicant.phone || ''}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">応募経路</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${this.sourceMapping[applicant.applicationSource] || ''}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">登録日時</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${this.formatDateTime(applicant.createdAt)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">事前確認完了</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${this.formatDateTime(applicant.screeningCompletedAt)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">所要時間</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${duration}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">法的適格性</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${legalStatus}</td>
+                    </tr>
+                </table>
 
-            // 回答
-            doc.setFont(undefined, 'normal');
-            const answerLines = this.splitTextToLines(doc, response.answer, rightMargin - leftMargin - 5);
-            answerLines.forEach(line => {
-                if (yPosition > 270) {
-                    doc.addPage();
-                    yPosition = 20;
-                }
-                doc.text(line, leftMargin + 5, yPosition);
-                yPosition += lineHeight;
-            });
-
-            yPosition += 3; // 質問間のスペース
-        });
-
-        // フッター
-        const pageCount = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.setFontSize(8);
-            doc.setFont(undefined, 'normal');
-            doc.text(
-                `ALSOK採用システム - Page ${i} of ${pageCount}`,
-                doc.internal.pageSize.getWidth() / 2,
-                doc.internal.pageSize.getHeight() - 10,
-                { align: 'center' }
-            );
-        }
-
-        return doc;
+                <h2 style="background: #f8f9fa; padding: 12px; margin: 20px 0 15px 0; border-left: 4px solid #003DA5; font-size: 16px;">
+                    事前確認回答
+                </h2>
+                
+                ${responses.map(response => `
+                    <div style="margin-bottom: 25px; border: 1px solid #e9ecef; border-radius: 8px; overflow: hidden;">
+                        <div style="background: #003DA5; color: white; padding: 12px; font-weight: bold;">
+                            Q${response.step}. ${response.question}
+                        </div>
+                        <div style="padding: 15px; background: white;">
+                            ${response.answer.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                `).join('')}
+                
+                <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
+                    ALSOK採用システム - 事前確認データ
+                </div>
+            </div>
+        `;
     }
 
     /**
