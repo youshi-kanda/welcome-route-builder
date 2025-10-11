@@ -135,6 +135,8 @@ function doPost(e) {
             return updateApplicantStatusApi(postData);
         } else if (action === 'scheduleInterview') {
             return scheduleInterviewApi(postData);
+        } else if (action === 'cancelInterview') {
+            return cancelInterviewApi(postData);
         } else if (action === 'sendNotification') {
             return sendNotificationApi(postData);
         } else if (action === 'saveSettings') {
@@ -898,25 +900,315 @@ function updateApplicantStatusApi(data) {
 }
 
 /**
- * カレンダー空き枠取得API（未実装・次タスクで実装）
+ * ========================================
+ * Google Calendar API連携
+ * ========================================
+ */
+
+/**
+ * カレンダー空き枠取得API
+ * GET ?action=getAvailableSlots&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
  */
 function getAvailableSlotsApi(e) {
-    return createResponse({
-        success: true,
-        message: 'カレンダーAPI未実装',
-        slots: []
-    });
+    try {
+        const properties = PropertiesService.getScriptProperties();
+        const calendarEnabled = properties.getProperty('CALENDAR_ENABLED') === 'true';
+        
+        if (!calendarEnabled) {
+            return createResponse({
+                success: false,
+                error: 'カレンダー連携が無効です。設定ページで有効化してください。'
+            });
+        }
+        
+        const calendarId = properties.getProperty('CALENDAR_ID');
+        if (!calendarId) {
+            return createResponse({
+                success: false,
+                error: 'カレンダーIDが設定されていません。'
+            });
+        }
+        
+        const startDate = e.parameter.startDate || '';
+        const endDate = e.parameter.endDate || '';
+        
+        if (!startDate || !endDate) {
+            return createResponse({
+                success: false,
+                error: 'startDateとendDateが必要です'
+            });
+        }
+        
+        const calendar = CalendarApp.getCalendarById(calendarId);
+        if (!calendar) {
+            return createResponse({
+                success: false,
+                error: 'カレンダーが見つかりません。カレンダーIDを確認してください。'
+            });
+        }
+        
+        // 日付範囲のイベント取得
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // 終日まで
+        
+        const events = calendar.getEvents(start, end);
+        
+        // 空き枠を生成（営業時間: 9:00-18:00、1時間単位）
+        const slots = [];
+        const currentDate = new Date(start);
+        
+        while (currentDate <= end) {
+            // 平日のみ（土日を除外）
+            const dayOfWeek = currentDate.getDay();
+            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                // 9:00-18:00の各1時間枠
+                for (let hour = 9; hour < 18; hour++) {
+                    const slotStart = new Date(currentDate);
+                    slotStart.setHours(hour, 0, 0, 0);
+                    
+                    const slotEnd = new Date(currentDate);
+                    slotEnd.setHours(hour + 1, 0, 0, 0);
+                    
+                    // 現在時刻より未来の枠のみ
+                    if (slotStart > new Date()) {
+                        // この時間帯に予定がないか確認
+                        const isAvailable = !events.some(event => {
+                            const eventStart = event.getStartTime();
+                            const eventEnd = event.getEndTime();
+                            return (slotStart >= eventStart && slotStart < eventEnd) ||
+                                   (slotEnd > eventStart && slotEnd <= eventEnd) ||
+                                   (slotStart <= eventStart && slotEnd >= eventEnd);
+                        });
+                        
+                        if (isAvailable) {
+                            slots.push({
+                                startTime: Utilities.formatDate(slotStart, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss'),
+                                endTime: Utilities.formatDate(slotEnd, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss'),
+                                date: Utilities.formatDate(slotStart, Session.getScriptTimeZone(), 'yyyy-MM-dd'),
+                                time: Utilities.formatDate(slotStart, Session.getScriptTimeZone(), 'HH:mm')
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // 次の日へ
+            currentDate.setDate(currentDate.getDate() + 1);
+            currentDate.setHours(0, 0, 0, 0);
+        }
+        
+        console.log('✅ カレンダー空き枠取得成功:', slots.length + '件');
+        
+        return createResponse({
+            success: true,
+            slots: slots,
+            count: slots.length
+        });
+        
+    } catch (error) {
+        console.error('❌ カレンダー空き枠取得エラー:', error);
+        return createResponse({
+            success: false,
+            error: error.toString()
+        });
+    }
 }
 
 /**
- * 面接予約登録API（未実装・次タスクで実装）
+ * 面接予約登録API
+ * POST with action: 'scheduleInterview'
  */
 function scheduleInterviewApi(data) {
-    return createResponse({
-        success: true,
-        message: '面接予約API未実装',
-        eventId: ''
-    });
+    try {
+        const properties = PropertiesService.getScriptProperties();
+        const calendarEnabled = properties.getProperty('CALENDAR_ENABLED') === 'true';
+        
+        if (!calendarEnabled) {
+            return createResponse({
+                success: false,
+                error: 'カレンダー連携が無効です'
+            });
+        }
+        
+        const calendarId = properties.getProperty('CALENDAR_ID');
+        if (!calendarId) {
+            return createResponse({
+                success: false,
+                error: 'カレンダーIDが設定されていません'
+            });
+        }
+        
+        const applicantId = data.applicantId;
+        const interviewDate = data.interviewDate; // YYYY-MM-DD HH:mm:ss
+        const duration = data.duration || 60; // デフォルト60分
+        
+        if (!applicantId || !interviewDate) {
+            return createResponse({
+                success: false,
+                error: 'applicantIdとinterviewDateが必要です'
+            });
+        }
+        
+        // スプレッドシートから応募者情報取得
+        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+        const mainSheet = spreadsheet.getSheetByName(SHEET_NAME);
+        
+        if (!mainSheet) {
+            return createResponse({
+                success: false,
+                error: 'スプレッドシートが見つかりません'
+            });
+        }
+        
+        const dataRange = mainSheet.getDataRange();
+        const values = dataRange.getValues();
+        
+        // 応募者を検索（ID = 行番号）
+        const rowIndex = parseInt(applicantId);
+        if (rowIndex < 2 || rowIndex > values.length) {
+            return createResponse({
+                success: false,
+                error: '応募者が見つかりません'
+            });
+        }
+        
+        const rowData = values[rowIndex - 1];
+        const applicantName = rowData[1]; // B列: 応募者名
+        const phoneNumber = rowData[2]; // C列: 電話番号
+        
+        // カレンダーイベント作成
+        const calendar = CalendarApp.getCalendarById(calendarId);
+        if (!calendar) {
+            return createResponse({
+                success: false,
+                error: 'カレンダーが見つかりません'
+            });
+        }
+        
+        const startTime = new Date(interviewDate);
+        const endTime = new Date(startTime.getTime() + duration * 60000);
+        
+        const event = calendar.createEvent(
+            `ALSOK面接: ${applicantName}`,
+            startTime,
+            endTime,
+            {
+                description: `応募者名: ${applicantName}\n電話番号: ${phoneNumber}\n\n応募者ID: ${applicantId}`,
+                location: 'ALSOK本社（または指定場所）'
+            }
+        );
+        
+        const eventId = event.getId();
+        
+        // スプレッドシートに面接日時とイベントIDを保存
+        const aeColumn = Object.keys(COLUMN_MAPPING).indexOf('AE') + 1; // 面接日時
+        const afColumn = Object.keys(COLUMN_MAPPING).indexOf('AF') + 1; // カレンダーイベントID
+        const adColumn = Object.keys(COLUMN_MAPPING).indexOf('AD') + 1; // 更新日時
+        
+        mainSheet.getRange(rowIndex, aeColumn).setValue(interviewDate);
+        mainSheet.getRange(rowIndex, afColumn).setValue(eventId);
+        mainSheet.getRange(rowIndex, adColumn).setValue(formatDateTime(new Date()));
+        
+        logActivity('面接予約登録', 'SUCCESS', 
+            `応募者: ${applicantName}, 日時: ${interviewDate}, イベントID: ${eventId}`);
+        
+        console.log('✅ 面接予約登録成功:', eventId);
+        
+        return createResponse({
+            success: true,
+            message: '面接予約を登録しました',
+            eventId: eventId,
+            interviewDate: interviewDate
+        });
+        
+    } catch (error) {
+        console.error('❌ 面接予約登録エラー:', error);
+        return createResponse({
+            success: false,
+            error: error.toString()
+        });
+    }
+}
+
+/**
+ * 面接予約キャンセルAPI
+ * POST with action: 'cancelInterview'
+ */
+function cancelInterviewApi(data) {
+    try {
+        const properties = PropertiesService.getScriptProperties();
+        const calendarId = properties.getProperty('CALENDAR_ID');
+        
+        if (!calendarId) {
+            return createResponse({
+                success: false,
+                error: 'カレンダーIDが設定されていません'
+            });
+        }
+        
+        const applicantId = data.applicantId;
+        
+        if (!applicantId) {
+            return createResponse({
+                success: false,
+                error: 'applicantIdが必要です'
+            });
+        }
+        
+        // スプレッドシートからイベントID取得
+        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+        const mainSheet = spreadsheet.getSheetByName(SHEET_NAME);
+        
+        const rowIndex = parseInt(applicantId);
+        const afColumn = Object.keys(COLUMN_MAPPING).indexOf('AF') + 1;
+        
+        const eventId = mainSheet.getRange(rowIndex, afColumn).getValue();
+        
+        if (!eventId) {
+            return createResponse({
+                success: false,
+                error: '予約されている面接が見つかりません'
+            });
+        }
+        
+        // カレンダーイベント削除
+        const calendar = CalendarApp.getCalendarById(calendarId);
+        const event = calendar.getEventById(eventId);
+        
+        if (event) {
+            event.deleteEvent();
+            
+            // スプレッドシートから面接情報をクリア
+            const aeColumn = Object.keys(COLUMN_MAPPING).indexOf('AE') + 1;
+            const adColumn = Object.keys(COLUMN_MAPPING).indexOf('AD') + 1;
+            
+            mainSheet.getRange(rowIndex, aeColumn).setValue('');
+            mainSheet.getRange(rowIndex, afColumn).setValue('');
+            mainSheet.getRange(rowIndex, adColumn).setValue(formatDateTime(new Date()));
+            
+            logActivity('面接予約キャンセル', 'SUCCESS', `イベントID: ${eventId}`);
+            
+            console.log('✅ 面接予約キャンセル成功');
+            
+            return createResponse({
+                success: true,
+                message: '面接予約をキャンセルしました'
+            });
+        } else {
+            return createResponse({
+                success: false,
+                error: 'カレンダーイベントが見つかりません'
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ 面接予約キャンセルエラー:', error);
+        return createResponse({
+            success: false,
+            error: error.toString()
+        });
+    }
 }
 
 /**

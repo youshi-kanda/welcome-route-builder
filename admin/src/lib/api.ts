@@ -87,15 +87,16 @@ export async function getAvailableSlots(
   })
   
   const response = await fetch(`${API_BASE_URL}?${params.toString()}`)
-  return handleResponse<AvailableSlot[]>(response)
+  const result = await handleResponse<{ success: boolean; slots: AvailableSlot[] }>(response)
+  return result.slots
 }
 
 // 面接予約登録
 export async function scheduleInterview(
   applicantId: string,
-  date: string,
-  time: string
-): Promise<{ success: boolean; eventId: string }> {
+  interviewDate: string,
+  duration?: number
+): Promise<{ success: boolean; eventId: string; interviewDate: string }> {
   const response = await fetch(API_BASE_URL, {
     method: 'POST',
     headers: {
@@ -104,12 +105,30 @@ export async function scheduleInterview(
     body: JSON.stringify({
       action: 'scheduleInterview',
       applicantId,
-      date,
-      time,
+      interviewDate,
+      duration,
     }),
   })
   
-  return handleResponse<{ success: boolean; eventId: string }>(response)
+  return handleResponse<{ success: boolean; eventId: string; interviewDate: string }>(response)
+}
+
+// 面接予約キャンセル
+export async function cancelInterview(
+  applicantId: string
+): Promise<{ success: boolean }> {
+  const response = await fetch(API_BASE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      action: 'cancelInterview',
+      applicantId,
+    }),
+  })
+  
+  return handleResponse<{ success: boolean }>(response)
 }
 
 // 通知送信

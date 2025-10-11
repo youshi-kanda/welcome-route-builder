@@ -106,14 +106,32 @@
   "success": true,
   "slots": [
     {
+      "startTime": "2025-01-15 09:00:00",
+      "endTime": "2025-01-15 10:00:00",
       "date": "2025-01-15",
-      "startTime": "10:00",
-      "endTime": "11:00",
-      "available": true
+      "time": "09:00"
+    },
+    {
+      "startTime": "2025-01-15 10:00:00",
+      "endTime": "2025-01-15 11:00:00",
+      "date": "2025-01-15",
+      "time": "10:00"
     }
-  ]
+  ],
+  "count": 2
 }
 ```
+
+**cURLコマンド例**:
+```bash
+curl "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?action=getAvailableSlots&startDate=2025-01-15&endDate=2025-01-20"
+```
+
+**注意事項**:
+- 営業時間: 9:00-18:00（平日のみ）
+- 1時間単位の枠で提供
+- 現在時刻より未来の枠のみ返却
+- 既存のカレンダーイベントと重複しない枠のみ
 
 ## ✏️ POST API（書き込み・更新）
 
@@ -147,7 +165,7 @@
 }
 ```
 
-### 2. 面接予約登録（未実装）
+### 2. 面接予約登録
 
 **エンドポイント**: `POST`
 
@@ -156,8 +174,8 @@
 {
   "action": "scheduleInterview",
   "applicantId": "2",
-  "date": "2025-01-15",
-  "time": "10:00"
+  "interviewDate": "2025-01-15 10:00:00",
+  "duration": 60
 }
 ```
 
@@ -165,12 +183,100 @@
 ```json
 {
   "success": true,
-  "message": "面接予約が完了しました",
-  "eventId": "calendar_event_id_xxx"
+  "message": "面接予約を登録しました",
+  "eventId": "calendar_event_id_xxx",
+  "interviewDate": "2025-01-15 10:00:00"
 }
 ```
 
-### 3. 通知送信（未実装）
+**cURLコマンド例**:
+```bash
+curl -X POST "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "scheduleInterview",
+    "applicantId": "2",
+    "interviewDate": "2025-01-15 10:00:00",
+    "duration": 60
+  }'
+```
+
+### 3. 面接予約キャンセル
+
+**エンドポイント**: `POST`
+
+**リクエストボディ**:
+```json
+{
+  "action": "cancelInterview",
+  "applicantId": "2"
+}
+```
+
+**レスポンス例**:
+```json
+{
+  "success": true,
+  "message": "面接予約をキャンセルしました"
+}
+```
+
+### 4. 設定取得
+
+**エンドポイント**: `GET ?action=getSettings`
+
+**レスポンス例**:
+```json
+{
+  "success": true,
+  "settings": {
+    "calendarId": "your-calendar@group.calendar.google.com",
+    "calendarEnabled": true,
+    "twilioAccountSid": "ACxxxxxxxx",
+    "twilioAuthToken": "********",
+    "twilioPhoneNumber": "+815012345678",
+    "twilioEnabled": false,
+    "emailEnabled": true,
+    "emailFrom": "noreply@alsok.co.jp",
+    "qualifiedEmailTemplate": "件名: 【ALSOK】...",
+    "rejectedEmailTemplate": "件名: 【ALSOK】...",
+    "interviewReminderTemplate": "件名: 【ALSOK】...",
+    "qualifiedSmsTemplate": "【ALSOK】{{name}}様...",
+    "interviewSmsTemplate": "【ALSOK】{{name}}様..."
+  }
+}
+```
+
+### 5. 設定保存
+
+**エンドポイント**: `POST`
+
+**リクエストボディ**:
+```json
+{
+  "action": "saveSettings",
+  "settings": {
+    "calendarId": "your-calendar@group.calendar.google.com",
+    "calendarEnabled": true,
+    "twilioAccountSid": "ACxxxxxxxx",
+    "twilioAuthToken": "your_auth_token",
+    "twilioPhoneNumber": "+815012345678",
+    "twilioEnabled": false,
+    "emailEnabled": true,
+    "emailFrom": "noreply@alsok.co.jp"
+  }
+}
+```
+
+**レスポンス例**:
+```json
+{
+  "success": true,
+  "message": "設定を保存しました"
+}
+```
+
+### 6. 通知送信（未実装）
 
 **エンドポイント**: `POST`
 
