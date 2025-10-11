@@ -1,0 +1,32 @@
+# Cloudflare Pages Configuration for Admin Dashboard
+# https://developers.cloudflare.com/pages/configuration/
+
+# Build configuration
+build:
+  command: cd admin && npm install && npm run build
+  output_directory: admin/dist
+  root_directory: /
+
+# Environment variables (placeholder - set in Cloudflare Dashboard)
+env:
+  production:
+    NODE_VERSION: "20"
+    # VITE_GAS_API_URL: Set in Cloudflare Dashboard
+  
+  preview:
+    NODE_VERSION: "20"
+    # VITE_GAS_API_URL: Set in Cloudflare Dashboard (preview environment)
+
+# Routes and redirects
+routes:
+  - path: "/*"
+    type: "spa"
+
+# Headers
+headers:
+  - path: "/*"
+    headers:
+      X-Frame-Options: "DENY"
+      X-Content-Type-Options: "nosniff"
+      Referrer-Policy: "strict-origin-when-cross-origin"
+      Permissions-Policy: "geolocation=(), microphone=(), camera=()"
