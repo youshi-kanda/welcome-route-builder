@@ -6,15 +6,19 @@ build:
   command: cd admin && npm install && npm run build
   output_directory: admin/dist
   root_directory: /
+  # Use npm instead of bun
+  package_manager: npm
 
 # Environment variables (placeholder - set in Cloudflare Dashboard)
 env:
   production:
     NODE_VERSION: "20"
+    NPM_FLAGS: "--legacy-peer-deps"
     # VITE_GAS_API_URL: Set in Cloudflare Dashboard
   
   preview:
     NODE_VERSION: "20"
+    NPM_FLAGS: "--legacy-peer-deps"
     # VITE_GAS_API_URL: Set in Cloudflare Dashboard (preview environment)
 
 # Routes and redirects
