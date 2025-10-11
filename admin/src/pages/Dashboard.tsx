@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Search, Filter, RefreshCw, UserCheck, Clock, CheckCircle2, Eye, Edit, Calendar, Send } from 'lucide-react'
+import { UserCheck, Clock, CheckCircle2, Eye, Edit, Calendar, Send } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -41,7 +41,7 @@ export default function Dashboard() {
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
   const [notificationModalOpen, setNotificationModalOpen] = useState(false)
 
-  const { data: applicants, isLoading, refetch } = useQuery({
+  const { data: applicants, isLoading } = useQuery({
     queryKey: ['applicants', filters],
     queryFn: async () => {
       if (useMockData) {
@@ -82,54 +82,54 @@ export default function Dashboard() {
   return (
     <div className="container mx-auto px-4 py-6">
       {/* 統計カード */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">総応募者数</CardTitle>
-              <UserCheck className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">全期間</p>
-            </CardContent>
-          </Card>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">総応募者数</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <p className="text-xs text-muted-foreground">全期間</p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">審査完了</CardTitle>
-              <Clock className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.screeningCompleted}</div>
-              <p className="text-xs text-muted-foreground">確認待ち</p>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">審査完了</CardTitle>
+            <Clock className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.screeningCompleted}</div>
+            <p className="text-xs text-muted-foreground">確認待ち</p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">審査中</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.underReview}</div>
-              <p className="text-xs text-muted-foreground">人事審査中</p>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">審査中</CardTitle>
+            <Clock className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.underReview}</div>
+            <p className="text-xs text-muted-foreground">人事審査中</p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">合格者</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.qualified}</div>
-              <p className="text-xs text-muted-foreground">面接予約待ち</p>
-            </CardContent>
-          </Card>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">合格者</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.qualified}</div>
+            <p className="text-xs text-muted-foreground">面接予約待ち</p>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* フィルター＆検索 */}
-        <Card className="mb-6">
+      {/* フィルター＆検索 */}
+      <Card className="mb-6">
           <CardHeader>
             <CardTitle>フィルター</CardTitle>
             <CardDescription>応募者を検索・絞り込み</CardDescription>
@@ -146,7 +146,7 @@ export default function Dashboard() {
               <div>
                 <Select
                   value={filters.status}
-                  onValueChange={(value) => setFilters({ ...filters, status: value as any })}
+                  onValueChange={(value) => setFilters({ ...filters, status: value as ApplicantFilters['status'] })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="ステータス" />
@@ -164,7 +164,7 @@ export default function Dashboard() {
               <div>
                 <Select
                   value={filters.qualificationStatus}
-                  onValueChange={(value) => setFilters({ ...filters, qualificationStatus: value as any })}
+                  onValueChange={(value) => setFilters({ ...filters, qualificationStatus: value as ApplicantFilters['qualificationStatus'] })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="適格性判定" />
@@ -181,8 +181,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* 応募者一覧テーブル */}
-        <Card>
+      {/* 応募者一覧テーブル */}
+      <Card>
           <CardHeader>
             <CardTitle>応募者一覧</CardTitle>
             <CardDescription>
@@ -289,7 +289,6 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-      </div>
 
       {/* モーダル */}
       <ApplicantDetailModal

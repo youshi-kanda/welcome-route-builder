@@ -152,10 +152,6 @@ export async function sendNotification(
   
   return handleResponse<{ success: boolean; message: string }>(response)
 }
-  })
-  
-  return handleResponse<{ success: boolean }>(response)
-}
 
 // 設定取得
 export async function getSettings(): Promise<SystemSettings> {

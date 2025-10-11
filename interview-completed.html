@@ -304,7 +304,7 @@
     </div>
     
     <!-- モーダル: 回答内容確認 -->
-    <div id="answer-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div id="answer-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden">
             <div class="p-6 border-b">
                 <div class="flex items-center justify-between">
@@ -323,7 +323,7 @@
     </div>
     
     <!-- モーダル: お問い合わせ -->
-    <div id="contact-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div id="contact-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-sm w-full">
             <div class="p-6">
                 <div class="text-center">
@@ -492,21 +492,28 @@
             }
             
             modal.classList.remove('hidden');
+            modal.classList.add('flex');
         }
         
         // 回答モーダル閉じる
         function closeAnswerModal() {
-            document.getElementById('answer-modal').classList.add('hidden');
+            const modal = document.getElementById('answer-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
         
         // お問い合わせモーダル表示
         function showContactModal() {
-            document.getElementById('contact-modal').classList.remove('hidden');
+            const modal = document.getElementById('contact-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
         }
         
         // お問い合わせモーダル閉じる
         function closeContactModal() {
-            document.getElementById('contact-modal').classList.add('hidden');
+            const modal = document.getElementById('contact-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
         
         // PDF出力

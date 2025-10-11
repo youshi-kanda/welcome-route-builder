@@ -90,7 +90,10 @@ export function NotificationModal({
           {/* 通知タイプ選択 */}
           <div className="space-y-2">
             <Label>通知タイプ</Label>
-            <Select value={notificationType} onValueChange={(value: any) => setNotificationType(value)}>
+            <Select 
+              value={notificationType} 
+              onValueChange={(value: 'qualified' | 'rejected' | 'interview_reminder') => setNotificationType(value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="通知タイプを選択" />
               </SelectTrigger>
@@ -118,7 +121,7 @@ export function NotificationModal({
                     key={ch.value}
                     variant={channel === ch.value ? 'default' : 'outline'}
                     className="flex flex-col h-auto py-3"
-                    onClick={() => setChannel(ch.value as any)}
+                    onClick={() => setChannel(ch.value as 'email' | 'sms' | 'both')}
                   >
                     <Icon className="h-5 w-5 mb-1" />
                     <span className="text-xs">{ch.label}</span>

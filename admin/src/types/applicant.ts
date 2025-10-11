@@ -66,7 +66,8 @@ export interface AvailableSlot {
   date: string
   startTime: string
   endTime: string
-  available: boolean
+  time?: string  // HH:mm形式の時刻
+  available?: boolean
 }
 
 // 通知テンプレート

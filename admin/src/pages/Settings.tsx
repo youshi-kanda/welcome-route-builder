@@ -339,7 +339,7 @@ export default function Settings() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => setFormData(settings)}
+            onClick={() => settings && setFormData(settings)}
             disabled={saveMutation.isPending}
           >
             リセット
