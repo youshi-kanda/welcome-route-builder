@@ -1,10 +1,17 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Search, Filter, RefreshCw, UserCheck, Clock, CheckCircle2 } from 'lucide-react'
+import { Search, Filter, RefreshCw, UserCheck, Clock, CheckCircle2, Eye, Edit } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -13,16 +20,22 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { ApplicantDetailModal } from '@/components/ApplicantDetailModal'
+import { StatusUpdateModal } from '@/components/StatusUpdateModal'
 import { getApplicants, mockApplicants } from '@/lib/api'
 import { formatDate, formatPhoneNumber, getStatusColor, getStatusLabel } from '@/lib/utils'
-import type { ApplicantFilters } from '@/types/applicant'
+import type { Applicant, ApplicantFilters } from '@/types/applicant'
 
 export default function Dashboard() {
   const [useMockData] = useState(true) // 開発中はモックデータ使用
   const [filters, setFilters] = useState<ApplicantFilters>({
     status: 'all',
     qualificationStatus: 'all',
+    searchQuery: '',
   })
+  const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null)
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [statusModalOpen, setStatusModalOpen] = useState(false)
 
   const { data: applicants, isLoading, refetch } = useQuery({
     queryKey: ['applicants', filters],
@@ -40,6 +53,16 @@ export default function Dashboard() {
     screeningCompleted: applicants?.filter(a => a.status === 'screening_completed').length || 0,
     underReview: applicants?.filter(a => a.status === 'under_review').length || 0,
     qualified: applicants?.filter(a => a.status === 'qualified').length || 0,
+  }
+
+  const handleViewDetail = (applicant: Applicant) => {
+    setSelectedApplicant(applicant)
+    setDetailModalOpen(true)
+  }
+
+  const handleUpdateStatus = (applicant: Applicant) => {
+    setSelectedApplicant(applicant)
+    setStatusModalOpen(true)
   }
 
   return (
@@ -119,23 +142,48 @@ export default function Dashboard() {
             <CardDescription>応募者を検索・絞り込み</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <div className="flex-1">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-2">
                 <Input
                   placeholder="応募者名、電話番号で検索..."
                   value={filters.searchQuery || ''}
                   onChange={(e) => setFilters({ ...filters, searchQuery: e.target.value })}
-                  className="w-full"
                 />
               </div>
-              <Button variant="outline">
-                <Search className="h-4 w-4 mr-2" />
-                検索
-              </Button>
-              <Button variant="outline">
-                <Filter className="h-4 w-4 mr-2" />
-                詳細フィルター
-              </Button>
+              <div>
+                <Select
+                  value={filters.status}
+                  onValueChange={(value) => setFilters({ ...filters, status: value as any })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="ステータス" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">すべて</SelectItem>
+                    <SelectItem value="screening_completed">審査完了</SelectItem>
+                    <SelectItem value="under_review">審査中</SelectItem>
+                    <SelectItem value="qualified">合格</SelectItem>
+                    <SelectItem value="disqualified">不合格</SelectItem>
+                    <SelectItem value="interview_scheduled">面接予約済み</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Select
+                  value={filters.qualificationStatus}
+                  onValueChange={(value) => setFilters({ ...filters, qualificationStatus: value as any })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="適格性判定" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">すべて</SelectItem>
+                    <SelectItem value="適格性高い">適格性高い</SelectItem>
+                    <SelectItem value="適格の可能性あり">適格の可能性あり</SelectItem>
+                    <SelectItem value="要確認">要確認</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -157,7 +205,7 @@ export default function Dashboard() {
                   <TableHead>電話番号</TableHead>
                   <TableHead>適格性判定</TableHead>
                   <TableHead>ステータス</TableHead>
-                  <TableHead>アクション</TableHead>
+                  <TableHead className="text-right">アクション</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -194,10 +242,25 @@ export default function Dashboard() {
                         {getStatusLabel(applicant.status)}
                       </span>
                     </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm">
-                        詳細
-                      </Button>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDetail(applicant)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          詳細
+                        </Button>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleUpdateStatus(applicant)}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          更新
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -212,6 +275,18 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </main>
+
+      {/* モーダル */}
+      <ApplicantDetailModal
+        applicant={selectedApplicant}
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+      />
+      <StatusUpdateModal
+        applicant={selectedApplicant}
+        open={statusModalOpen}
+        onOpenChange={setStatusModalOpen}
+      />
     </div>
   )
 }
