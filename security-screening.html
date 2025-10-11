@@ -97,7 +97,7 @@
         /* レスポンシブ対応 */
         @media (max-width: 768px) {
             .chat-container {
-                max-height: calc(100vh - 260px); /* 11ステップ対応 */
+                max-height: calc(100vh - 260px); /* 12ステップ対応 */
             }
             
             #choices-container {
@@ -484,7 +484,7 @@
         function showNextStep() {
             console.log(`showNextStep: currentStep=${currentStep}, totalSteps=${screeningSteps.length}`);
             
-            if (currentStep >= 11) { // 明示的に11ステップ指定
+            if (currentStep >= 12) { // 明示的に12ステップ指定
                 console.log('スクリーニング完了');
                 completeScreening();
                 return;
@@ -494,8 +494,8 @@
             console.log(`Next step: ${step.id} - ${step.question}`);
             
             // UI更新
-            stepCounter.textContent = `${step.id}/11`;
-            progressBar.style.width = `${(step.id / 11) * 100}%`;
+            stepCounter.textContent = `${step.id}/12`;
+            progressBar.style.width = `${(step.id / 12) * 100}%`;
             screeningStatus.textContent = `ステップ ${step.id}`;
             
             // 質問メッセージを追加
@@ -720,7 +720,7 @@
             // 次のステップへ
             currentStep++;
             setTimeout(() => {
-                if (currentStep < 11) { // 明示的に11ステップ指定
+                if (currentStep < 12) { // 明示的に12ステップ指定
                     showNextStep();
                     setProcessing(false);
                 } else {
@@ -753,7 +753,7 @@
             // 次のステップへ
             currentStep++;
             setTimeout(() => {
-                if (currentStep < 11) { // 明示的に11ステップ指定
+                if (currentStep < 12) { // 明示的に12ステップ指定
                     showNextStep();
                     setProcessing(false);
                 } else {
@@ -841,7 +841,7 @@
         
         // 採用可能性スコア計算（拡張版）
         function calculateRecruitmentScore() {
-            let score = 40; // ベーススコア（11ステップ対応で調整）
+            let score = 40; // ベーススコア（12ステップ対応で調整）
             
             const responses = applicantData.screeningResponses || [];
             
