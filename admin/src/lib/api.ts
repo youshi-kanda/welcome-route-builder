@@ -1,4 +1,5 @@
 import type { Applicant, ApplicantFilters, AvailableSlot } from '@/types/applicant'
+import type { SystemSettings } from '@/types/settings'
 
 const API_BASE_URL = import.meta.env.VITE_GAS_API_URL || ''
 
@@ -133,7 +134,34 @@ export async function sendNotification(
   return handleResponse<{ success: boolean }>(response)
 }
 
-// モックデータ（開発用）
+// 設定取得
+export async function getSettings(): Promise<SystemSettings> {
+  const params = new URLSearchParams({
+    action: 'getSettings',
+  })
+  
+  const response = await fetch(`${API_BASE_URL}?${params.toString()}`)
+  const result = await handleResponse<{ success: boolean; settings: SystemSettings }>(response)
+  return result.settings
+}
+
+// 設定保存
+export async function saveSettings(settings: SystemSettings): Promise<{ success: boolean }> {
+  const response = await fetch(API_BASE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      action: 'saveSettings',
+      settings,
+    }),
+  })
+  
+  return handleResponse<{ success: boolean }>(response)
+}
+
+// モックデータ(開発用)
 export const mockApplicants: Applicant[] = [
   {
     id: '1',

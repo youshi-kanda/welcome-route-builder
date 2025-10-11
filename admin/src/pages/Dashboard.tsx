@@ -66,29 +66,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* ヘッダー */}
-      <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                ALSOK採用システム - 管理者ダッシュボード
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">
-                応募者の審査・面接予約・通知管理
-              </p>
-            </div>
-            <Button onClick={() => refetch()} size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              更新
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 統計カード */}
+    <div className="container mx-auto px-4 py-6">
+      {/* 統計カード */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -274,7 +253,7 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-      </main>
+      </div>
 
       {/* モーダル */}
       <ApplicantDetailModal

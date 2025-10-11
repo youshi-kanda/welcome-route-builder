@@ -61,6 +61,8 @@ function doGet(e) {
             return getApplicantDetailApi(e);
         } else if (action === 'getAvailableSlots') {
             return getAvailableSlotsApi(e);
+        } else if (action === 'getSettings') {
+            return getSettingsApi(e);
         }
         
         // 既存のステータス確認
@@ -135,6 +137,8 @@ function doPost(e) {
             return scheduleInterviewApi(postData);
         } else if (action === 'sendNotification') {
             return sendNotificationApi(postData);
+        } else if (action === 'saveSettings') {
+            return saveSettingsApi(postData);
         }
         
         // 既存の面接データ登録処理
@@ -916,11 +920,206 @@ function scheduleInterviewApi(data) {
 }
 
 /**
- * 通知送信API（未実装・次タスクで実装）
+ * 通知送信API(未実装・次タスクで実装)
  */
 function sendNotificationApi(data) {
     return createResponse({
         success: true,
         message: '通知送信API未実装'
     });
+}
+
+/**
+ * ========================================
+ * 設定管理API (PropertiesService)
+ * ========================================
+ */
+
+/**
+ * 設定データ取得API
+ * GET ?action=getSettings
+ */
+function getSettingsApi(e) {
+    try {
+        const properties = PropertiesService.getScriptProperties();
+        
+        // 各設定項目を取得
+        const settings = {
+            // Google Calendar設定
+            calendarId: properties.getProperty('CALENDAR_ID') || '',
+            calendarEnabled: properties.getProperty('CALENDAR_ENABLED') === 'true',
+            
+            // Twilio設定
+            twilioAccountSid: properties.getProperty('TWILIO_ACCOUNT_SID') || '',
+            twilioAuthToken: properties.getProperty('TWILIO_AUTH_TOKEN') || '',
+            twilioPhoneNumber: properties.getProperty('TWILIO_PHONE_NUMBER') || '',
+            twilioEnabled: properties.getProperty('TWILIO_ENABLED') === 'true',
+            
+            // メール通知設定
+            emailEnabled: properties.getProperty('EMAIL_ENABLED') === 'true',
+            emailFrom: properties.getProperty('EMAIL_FROM') || '',
+            
+            // 通知テンプレート
+            qualifiedEmailTemplate: properties.getProperty('QUALIFIED_EMAIL_TEMPLATE') || getDefaultQualifiedEmailTemplate(),
+            rejectedEmailTemplate: properties.getProperty('REJECTED_EMAIL_TEMPLATE') || getDefaultRejectedEmailTemplate(),
+            interviewReminderTemplate: properties.getProperty('INTERVIEW_REMINDER_TEMPLATE') || getDefaultInterviewReminderTemplate(),
+            qualifiedSmsTemplate: properties.getProperty('QUALIFIED_SMS_TEMPLATE') || getDefaultQualifiedSmsTemplate(),
+            interviewSmsTemplate: properties.getProperty('INTERVIEW_SMS_TEMPLATE') || getDefaultInterviewSmsTemplate()
+        };
+        
+        console.log('✅ 設定取得成功');
+        
+        return createResponse({
+            success: true,
+            settings: settings
+        });
+        
+    } catch (error) {
+        console.error('❌ 設定取得エラー:', error);
+        return createResponse({
+            success: false,
+            error: error.toString()
+        });
+    }
+}
+
+/**
+ * 設定データ保存API
+ * POST with action: 'saveSettings'
+ */
+function saveSettingsApi(data) {
+    try {
+        const properties = PropertiesService.getScriptProperties();
+        const settings = data.settings || {};
+        
+        // Google Calendar設定
+        if (settings.calendarId !== undefined) {
+            properties.setProperty('CALENDAR_ID', settings.calendarId);
+        }
+        if (settings.calendarEnabled !== undefined) {
+            properties.setProperty('CALENDAR_ENABLED', String(settings.calendarEnabled));
+        }
+        
+        // Twilio設定
+        if (settings.twilioAccountSid !== undefined) {
+            properties.setProperty('TWILIO_ACCOUNT_SID', settings.twilioAccountSid);
+        }
+        if (settings.twilioAuthToken !== undefined) {
+            properties.setProperty('TWILIO_AUTH_TOKEN', settings.twilioAuthToken);
+        }
+        if (settings.twilioPhoneNumber !== undefined) {
+            properties.setProperty('TWILIO_PHONE_NUMBER', settings.twilioPhoneNumber);
+        }
+        if (settings.twilioEnabled !== undefined) {
+            properties.setProperty('TWILIO_ENABLED', String(settings.twilioEnabled));
+        }
+        
+        // メール通知設定
+        if (settings.emailEnabled !== undefined) {
+            properties.setProperty('EMAIL_ENABLED', String(settings.emailEnabled));
+        }
+        if (settings.emailFrom !== undefined) {
+            properties.setProperty('EMAIL_FROM', settings.emailFrom);
+        }
+        
+        // 通知テンプレート
+        if (settings.qualifiedEmailTemplate !== undefined) {
+            properties.setProperty('QUALIFIED_EMAIL_TEMPLATE', settings.qualifiedEmailTemplate);
+        }
+        if (settings.rejectedEmailTemplate !== undefined) {
+            properties.setProperty('REJECTED_EMAIL_TEMPLATE', settings.rejectedEmailTemplate);
+        }
+        if (settings.interviewReminderTemplate !== undefined) {
+            properties.setProperty('INTERVIEW_REMINDER_TEMPLATE', settings.interviewReminderTemplate);
+        }
+        if (settings.qualifiedSmsTemplate !== undefined) {
+            properties.setProperty('QUALIFIED_SMS_TEMPLATE', settings.qualifiedSmsTemplate);
+        }
+        if (settings.interviewSmsTemplate !== undefined) {
+            properties.setProperty('INTERVIEW_SMS_TEMPLATE', settings.interviewSmsTemplate);
+        }
+        
+        logActivity('設定保存', 'SUCCESS', '管理画面設定を保存しました');
+        
+        console.log('✅ 設定保存成功');
+        
+        return createResponse({
+            success: true,
+            message: '設定を保存しました'
+        });
+        
+    } catch (error) {
+        console.error('❌ 設定保存エラー:', error);
+        return createResponse({
+            success: false,
+            error: error.toString()
+        });
+    }
+}
+
+/**
+ * デフォルトテンプレート取得関数
+ */
+function getDefaultQualifiedEmailTemplate() {
+    return `件名: 【ALSOK】採用選考通過のご連絡
+
+{{name}}様
+
+この度は弊社の求人にご応募いただき、誠にありがとうございます。
+
+書類選考の結果、{{name}}様には面接へお進みいただくことになりました。
+つきましては、下記日程にて面接を実施させていただきたく存じます。
+
+■面接日時
+{{interviewDate}}
+
+■場所
+{{interviewLocation}}
+
+ご都合が悪い場合は、お手数ですがご連絡ください。
+
+何卒よろしくお願い申し上げます。
+
+ALSOK採用担当`;
+}
+
+function getDefaultRejectedEmailTemplate() {
+    return `件名: 【ALSOK】採用選考結果のご連絡
+
+{{name}}様
+
+この度は弊社の求人にご応募いただき、誠にありがとうございました。
+
+慎重に選考させていただきました結果、誠に残念ながら今回は
+ご希望に添えない結果となりました。
+
+{{name}}様の今後のご活躍を心よりお祈り申し上げます。
+
+ALSOK採用担当`;
+}
+
+function getDefaultInterviewReminderTemplate() {
+    return `件名: 【ALSOK】面接日時のご確認
+
+{{name}}様
+
+面接日時が近づいてまいりましたので、ご確認のご連絡です。
+
+■面接日時
+{{interviewDate}}
+
+■場所
+{{interviewLocation}}
+
+当日お会いできることを楽しみにしております。
+
+ALSOK採用担当`;
+}
+
+function getDefaultQualifiedSmsTemplate() {
+    return '【ALSOK】{{name}}様、書類選考を通過されました。面接日程の詳細はメールをご確認ください。';
+}
+
+function getDefaultInterviewSmsTemplate() {
+    return '【ALSOK】{{name}}様、{{interviewDate}}の面接のご確認です。お気をつけてお越しください。';
 }
