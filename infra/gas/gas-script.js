@@ -426,16 +426,6 @@ function addInterviewData(data) {
 
     const qualificationStatus = determineQualificationStatus(data);
   
-    // Prepare a truncated raw JSON note for debugging - stored in AA (備考)
-    var rawJsonNote = '';
-    try {
-        var raw = JSON.stringify(data);
-        // truncate to avoid exceeding cell size limits
-        rawJsonNote = raw.length > 1200 ? raw.substring(0, 1200) + '... (truncated)' : raw;
-    } catch (e) {
-        rawJsonNote = '<<failed to stringify payload: ' + String(e) + '>>';
-    }
-
     const rowData = [
         formatDateTime(now), // A: 応募日時
         data.applicantName || '', // B: 応募者名
@@ -463,7 +453,7 @@ function addInterviewData(data) {
         data.screenResolution || '', // X: 画面解像度
         data.language || 'ja', // Y: 言語設定
         data.timezone || 'Asia/Tokyo', // Z: タイムゾーン
-        `AI面接完了 - ${qualificationStatus}\nRAW:${rawJsonNote}` // AA: 備考 (含: 受信payloadの一部)
+        `AI面接完了 - ${qualificationStatus}` // AA: 備考
     ];
   
     const newRowNumber = sheet.getLastRow() + 1;
