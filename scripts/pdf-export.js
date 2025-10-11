@@ -159,7 +159,7 @@ class AlsokPDFExporter {
     }
 
     /**
-     * 事前確認回答の処理
+     * 事前確認回答の処理（新11ステップ対応版）
      */
     processScreeningResponses(responses) {
         const processedResponses = [];
@@ -168,11 +168,11 @@ class AlsokPDFExporter {
             let answer = '';
             
             switch (response.step) {
-                case 1: // 応募経路
+                case 1: // Q1: 応募経路詳細
                     answer = this.sourceMapping[response.answer] || response.answer;
                     break;
                     
-                case 2: // 欠格事由チェック
+                case 2: // Q2: 欠格事由確認
                     if (Array.isArray(response.answer)) {
                         answer = response.answer
                             .map(id => this.disqualificationMapping[id] || id)
@@ -182,11 +182,11 @@ class AlsokPDFExporter {
                     }
                     break;
                     
-                case 3: // 勤務期間
+                case 3: // Q3: 勤務期間希望
                     answer = this.durationMapping[response.answer] || response.answer;
                     break;
                     
-                case 4: // 体力業務
+                case 4: // Q4: 体力面・業務対応
                     if (Array.isArray(response.answer)) {
                         answer = response.answer
                             .map(id => this.physicalCapabilityMapping[id] || id)
@@ -196,34 +196,31 @@ class AlsokPDFExporter {
                     }
                     break;
                     
-                case 5: // 意気込み（テキスト）
+                case 5: // Q5: 意気込み・アピール（テキスト）
                     answer = response.answer || '';
                     break;
                     
-                case 6: // 業務知識
+                case 6: // Q6: 仕事内容理解度
                     answer = this.knowledgeMapping[response.answer] || response.answer;
                     break;
                     
-                case 7: // 責任について（テキスト）
+                case 7: // Q7: 責任の重さ認識（テキスト）
                     answer = response.answer || '';
                     break;
                     
-                case 8: // 研修意欲
+                case 8: // Q8: 研修・資格意欲
                     answer = this.trainingMapping[response.answer] || response.answer;
                     break;
                     
-                case 9: // 重視する点
+                case 9: // Q9: 重視する点
                     answer = this.priorityMapping[response.answer] || response.answer;
-                    if (response.answer === 4 && response.followUp) {
-                        answer += `: ${response.followUp}`;
-                    }
                     break;
                     
-                case 10: // 他社状況
+                case 10: // Q10: 他社検討状況
                     answer = this.competitorMapping[response.answer] || response.answer;
                     break;
                     
-                case 11: // 面接準備（テキスト）
+                case 11: // Q11: 面接準備・質問（テキスト）
                     answer = response.answer || '';
                     break;
             }

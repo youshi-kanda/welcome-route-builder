@@ -782,30 +782,16 @@
             // 完了メッセージ
             let completionMessage;
             let messageClass;
-            let nextAction;
+            // 事前確認完了メッセージ（合否判定なし）
+            completionMessage = `${applicantData.name}さん、事前確認が完了いたしました。<br><br>` +
+                              `ご回答いただいた内容を採用担当者が確認させていただきます。<br>` +
+                              `今後の選考につきましては、後日ご連絡させていただきます。<br>` +
+                              `貴重なお時間をいただき、ありがとうございました。`;
+            messageClass = 'info-card';
             
-            if (disqualificationReasons.length > 0) {
-                // 欠格事由あり
-                completionMessage = `${applicantData.name}さん、事前確認が完了いたしました。<br><br>` +
-                                  `誠に申し訳ございませんが、法的要件により今回は採用を見送らせていただくこととなりました。<br>` +
-                                  `貴重なお時間をいただき、ありがとうございました。`;
-                messageClass = 'disqualified-alert';
-                nextAction = 'disqualified';
-                
-                window.alsokStorage.setInterviewEligibility(applicantId, false, 0);
-            } else {
-                // 適格者
-                completionMessage = `${applicantData.name}さん、事前確認が完了いたしました。<br><br>` +
-                                  `すべての項目で基準を満たしており、面接対象者として選出いたします。<br>` +
-                                  `後日、面接日程についてご連絡させていただきます。<br>` +
-                                  `ありがとうございました！`;
-                messageClass = 'qualified-alert';
-                nextAction = 'qualified';
-                
-                // 基本的なスコア計算（簡易版）
-                const score = calculateRecruitmentScore();
-                window.alsokStorage.setInterviewEligibility(applicantId, true, score);
-            }
+            // 基本的なスコア計算（参考値として保存）
+            const score = calculateRecruitmentScore();
+            window.alsokStorage.setInterviewEligibility(applicantId, null, score); // nullで判定保留
             
             // 完了メッセージ表示
             setTimeout(() => {

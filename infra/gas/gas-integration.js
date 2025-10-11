@@ -248,6 +248,16 @@ class GASIntegration {
                 question: r.question || r.questionText || '',
                 answer: r.answer || r.response || r.value || ''
             }));
+            // also include screeningResponses if present (used by some flows)
+            if (Array.isArray(applicantData.screeningResponses) && applicantData.screeningResponses.length) {
+                const scr = applicantData.screeningResponses.map((r, idx) => ({
+                    questionNumber: r.step || r.questionNumber || (idx + 1),
+                    question: r.question || r.prompt || '',
+                    answer: r.answer || r.response || r.value || ''
+                }));
+                // append screening responses after main responses
+                normalizedResponses.push(...scr);
+            }
         return {
             // tolerate multiple name/phone field names from different flows
             applicantName: applicantData.name || applicantData.fullName || applicantData.applicantName || '',

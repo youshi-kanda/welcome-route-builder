@@ -7,10 +7,10 @@ const LOG_SHEET_NAME = 'システムログ';
 
 const COLUMN_MAPPING = {
     A: '応募日時', B: '応募者名', C: '電話番号', D: '応募経路',
-    E: '応募経路詳細', F: '欠格事由確認', G: '勤務期間希望', H: '体力面・業務対応',
-    I: '意気込み・アピール', J: '仕事内容理解度', K: '責任の重さ認識',
-    L: '研修・資格意欲', M: '重視する点', N: '他社検討状況', O: '面接準備・質問',
-    P: '失格状況', Q: '総合結果', R: '完了時間', S: 'デバイス種別',
+    E: 'Q1_応募経路詳細', F: 'Q2_欠格事由確認', G: 'Q3_勤務期間希望', H: 'Q4_体力面・業務対応',
+    I: 'Q5_意気込み・アピール', J: 'Q6_仕事内容理解度', K: 'Q7_責任の重さ認識',
+    L: 'Q8_研修・資格意欲', M: 'Q9_重視する点', N: 'Q10_他社検討状況', O: 'Q11_面接準備・質問',
+    P: '適格性判定', Q: '総合結果', R: '完了時間', S: 'デバイス種別',
     T: 'IPアドレス', U: 'ユーザーエージェント', V: 'セッションID',
     W: 'リファラー', X: '画面解像度', Y: '言語設定', Z: 'タイムゾーン',
     AA: '備考'
@@ -422,18 +422,18 @@ function addInterviewData(data) {
         data.applicantName || '', // B: 応募者名
         data.phoneNumber || '', // C: 電話番号
         data.applicationSource || 'AI面接チャットbot', // D: 応募経路
-        data.step1_answer || '', // E: 年齢確認
-        data.step2_answer || '', // F: 国籍確認
-        data.step3_answer || '', // G: 過去の逮捕歴
-        data.step4_answer || '', // H: 暴力団関係
-        data.step5_answer || '', // I: 精神的な病気
-        data.step6_answer || '', // J: アルコール依存症
-        data.step7_answer || '', // K: 薬物依存症
-        data.step8_answer || '', // L: 住居確認
-        data.step9_answer || '', // M: 連絡先確認
-        data.step10_answer || '', // N: 面接希望
-        data.step11_answer || '', // O: 特記事項
-        qualificationStatus, // P: 失格状況
+        data.step1_answer || '', // E: Q1_応募経路詳細
+        data.step2_answer || '', // F: Q2_欠格事由確認
+        data.step3_answer || '', // G: Q3_勤務期間希望
+        data.step4_answer || '', // H: Q4_体力面・業務対応
+        data.step5_answer || '', // I: Q5_意気込み・アピール
+        data.step6_answer || '', // J: Q6_仕事内容理解度
+        data.step7_answer || '', // K: Q7_責任の重さ認識
+        data.step8_answer || '', // L: Q8_研修・資格意欲
+        data.step9_answer || '', // M: Q9_重視する点
+        data.step10_answer || '', // N: Q10_他社検討状況
+        data.step11_answer || '', // O: Q11_面接準備・質問
+        qualificationStatus, // P: 適格性判定
         determineOverallResult(qualificationStatus), // Q: 総合結果
         data.completionTime || formatDateTime(now), // R: 完了時間
         getDeviceType(data.userAgent), // S: デバイス種別
@@ -453,23 +453,54 @@ function addInterviewData(data) {
     return newRowNumber;
 }
 
-// ヘルパー関数群
+// ヘルパー関数群（新11ステップ対応版）
 function determineQualificationStatus(data) {
-    if (data.step1_answer && data.step1_answer.includes('未満')) return '年齢不適格';
-    if (data.step2_answer && !data.step2_answer.includes('日本')) return '国籍不適格';
-    if (data.step3_answer && data.step3_answer.includes('あり')) return '前科あり';
-    if (data.step4_answer && data.step4_answer.includes('あり')) return '暴力団関係';
-  
-    const healthIssues = [data.step5_answer, data.step6_answer, data.step7_answer];
-    for (let answer of healthIssues) {
-        if (answer && answer.includes('あり')) return 'その他不適格';
+    // Q2: 欠格事由確認（警備業法準拠）
+    if (data.step2_answer) {
+        const answer = String(data.step2_answer).toLowerCase();
+        if (answer.includes('禁錮') || answer.includes('刑に処せられた')) return '前科による不適格';
+        if (answer.includes('警備業法違反')) return '警備業法違反歴';
+        if (answer.includes('精神機能の障害')) return '精神機能要配慮';
+        if (answer.includes('アルコール') || answer.includes('薬物') || answer.includes('中毒')) return '薬物等依存歴';
+        if (answer.includes('暴力団')) return '暴力団関係';
     }
+    
+    // Q3: 勤務期間希望（継続性評価）
+    if (data.step3_answer) {
+        const answer = String(data.step3_answer).toLowerCase();
+        if (answer.includes('短期間') || answer.includes('数ヶ月以内')) return '継続性要検討';
+        if (answer.includes('3ヶ月') && !answer.includes('以上')) return '継続性要検討';
+    }
+    
+    // Q4: 体力面対応（業務適合性）
+    if (data.step4_answer) {
+        const answer = String(data.step4_answer).toLowerCase();
+        if (answer.includes('一部対応困難') || answer.includes('困難')) return '業務適合性要検討';
+    }
+    
+    // 記述式質問の内容評価（Q5, Q7, Q11）
+    const textAnswers = [data.step5_answer, data.step7_answer, data.step11_answer];
+    const emptyAnswers = textAnswers.filter(answer => !answer || String(answer).trim().length < 10);
+    if (emptyAnswers.length >= 2) return '回答内容要検討';
+    
     return '適格';
 }
 
 function determineOverallResult(qualificationStatus) {
-    if (qualificationStatus === '適格') return '2次面接対象';
-    if (qualificationStatus.includes('不適格') || qualificationStatus.includes('あり')) return '不採用';
+    // 法的不適格
+    if (qualificationStatus.includes('前科') || qualificationStatus.includes('暴力団') || 
+        qualificationStatus.includes('薬物') || qualificationStatus.includes('警備業法')) {
+        return '書類審査不通過';
+    }
+    
+    // 適格
+    if (qualificationStatus === '適格') return '書類審査通過';
+    
+    // 要検討事項
+    if (qualificationStatus.includes('要検討') || qualificationStatus.includes('要配慮')) {
+        return '個別審査対象';
+    }
+    
     return '要検討';
 }
 

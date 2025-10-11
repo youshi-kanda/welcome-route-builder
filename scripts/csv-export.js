@@ -75,7 +75,7 @@ class AlsokCSVExporter {
             3: '多数応募中'
         };
 
-        // CSVヘッダー定義
+        // CSVヘッダー定義（新11ステップ対応版）
         this.csvHeaders = [
             // 基本情報セクション
             '応募者ID',
@@ -87,25 +87,24 @@ class AlsokCSVExporter {
             '事前確認完了',
             '所要時間（分）',
             'ステータス',
-            '法的適格性',
+            '適格性判定',
             
-            // 事前確認回答セクション
+            // 事前確認回答セクション（11ステップ）
             'Q1_応募経路詳細',
-            'Q2_欠格事由チェック',
+            'Q2_欠格事由確認',
             'Q3_勤務期間希望',
-            'Q4_体力業務対応',
+            'Q4_体力面・業務対応',
             'Q5_意気込み・アピール',
-            'Q6_警備業務知識',
-            'Q7_責任についての考え',
+            'Q6_仕事内容理解度',
+            'Q7_責任の重さ認識',
             'Q8_研修・資格意欲',
             'Q9_重視する点',
-            'Q9_その他詳細',
             'Q10_他社検討状況',
             'Q11_面接準備・質問',
             
             // 管理用セクション
             '採用担当者メモ',
-            '面接実施判定',
+            '書類審査結果',
             '判定理由',
             '次回アクション',
             '更新日時'
@@ -150,21 +149,21 @@ class AlsokCSVExporter {
     }
 
     /**
-     * 事前確認回答の処理
+     * 事前確認回答の処理（新11ステップ対応版）
      */
     processScreeningResponses(responses) {
         // 11段階の回答を初期化
-        const processedResponses = new Array(12).fill(''); // Q1-Q11 + Q9その他詳細
+        const processedResponses = new Array(11).fill(''); // Q1-Q11
         
         responses.forEach(response => {
             const stepIndex = response.step - 1;
             
             switch (response.step) {
-                case 1: // 応募経路
+                case 1: // Q1: 応募経路詳細
                     processedResponses[0] = this.sourceMapping[response.answer] || response.answer;
                     break;
                     
-                case 2: // 欠格事由チェック
+                case 2: // Q2: 欠格事由確認
                     if (Array.isArray(response.answer)) {
                         processedResponses[1] = response.answer
                             .map(id => this.disqualificationMapping[id] || id)
@@ -174,11 +173,11 @@ class AlsokCSVExporter {
                     }
                     break;
                     
-                case 3: // 勤務期間
+                case 3: // Q3: 勤務期間希望
                     processedResponses[2] = this.durationMapping[response.answer] || response.answer;
                     break;
                     
-                case 4: // 体力業務
+                case 4: // Q4: 体力面・業務対応
                     if (Array.isArray(response.answer)) {
                         processedResponses[3] = response.answer
                             .map(id => this.physicalCapabilityMapping[id] || id)
@@ -188,36 +187,32 @@ class AlsokCSVExporter {
                     }
                     break;
                     
-                case 5: // 意気込み（テキスト）
+                case 5: // Q5: 意気込み・アピール（テキスト）
                     processedResponses[4] = this.sanitizeText(response.answer);
                     break;
                     
-                case 6: // 業務知識
+                case 6: // Q6: 仕事内容理解度
                     processedResponses[5] = this.knowledgeMapping[response.answer] || response.answer;
                     break;
                     
-                case 7: // 責任について（テキスト）
+                case 7: // Q7: 責任の重さ認識（テキスト）
                     processedResponses[6] = this.sanitizeText(response.answer);
                     break;
                     
-                case 8: // 研修意欲
+                case 8: // Q8: 研修・資格意欲
                     processedResponses[7] = this.trainingMapping[response.answer] || response.answer;
                     break;
                     
-                case 9: // 重視する点
+                case 9: // Q9: 重視する点
                     processedResponses[8] = this.priorityMapping[response.answer] || response.answer;
-                    // フォローアップ回答をチェック
-                    if (response.answer === 4 && response.followUp) {
-                        processedResponses[9] = this.sanitizeText(response.followUp);
-                    }
                     break;
                     
-                case 10: // 他社状況
-                    processedResponses[10] = this.competitorMapping[response.answer] || response.answer;
+                case 10: // Q10: 他社検討状況
+                    processedResponses[9] = this.competitorMapping[response.answer] || response.answer;
                     break;
                     
-                case 11: // 面接準備（テキスト）
-                    processedResponses[11] = this.sanitizeText(response.answer);
+                case 11: // Q11: 面接準備・質問（テキスト）
+                    processedResponses[10] = this.sanitizeText(response.answer);
                     break;
             }
         });
