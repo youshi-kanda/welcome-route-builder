@@ -129,15 +129,6 @@ function doPost(e) {
                 isTest: !!interviewData.test
             });
 
-            // Debug: log truncated received payload to the log sheet so we can inspect what fields were sent
-            try {
-                var payloadPreview = JSON.stringify(interviewData);
-                payloadPreview = payloadPreview.length > 2000 ? payloadPreview.substring(0, 2000) + '... (truncated)' : payloadPreview;
-                logActivity('RECEIVED_PAYLOAD', 'DEBUG', payloadPreview, interviewData.ipAddress || '', interviewData.sessionId || '');
-            } catch (plErr) {
-                console.warn('Failed to log payload preview:', plErr);
-            }
-
         } catch (parseError) {
             console.error('❌ データ解析エラー:', parseError);
             return createResponse({
