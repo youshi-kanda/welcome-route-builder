@@ -13,7 +13,7 @@ const COLUMN_MAPPING = {
     Q: '適格性判定', R: '総合結果', S: '完了時間', T: 'デバイス種別',
     U: 'IPアドレス', V: 'ユーザーエージェント', W: 'セッションID',
     X: 'リファラー', Y: '画面解像度', Z: '言語設定', AA: 'タイムゾーン',
-    AB: '備考'
+    AB: 'ステータス', AC: '審査メモ', AD: '更新日時', AE: '面接日時', AF: 'カレンダーイベントID'
 };
 
 /**
@@ -39,7 +39,7 @@ function onOpen() {
 }
 
 /**
- * 🆕 GETリクエスト処理（ステータス確認用）
+ * 🆕 GETリクエスト処理（ステータス確認用＋管理画面API）
  */
 function doGet(e) {
     try {
@@ -54,6 +54,16 @@ function doGet(e) {
             webAppUrl: ScriptApp.getService().getUrl()
         };
     
+        // 管理画面用API
+        if (action === 'getApplicants') {
+            return getApplicantsApi(e);
+        } else if (action === 'getApplicantDetail') {
+            return getApplicantDetailApi(e);
+        } else if (action === 'getAvailableSlots') {
+            return getAvailableSlotsApi(e);
+        }
+        
+        // 既存のステータス確認
         if (action === 'status') {
             const mainSheet = spreadsheet.getSheetByName(SHEET_NAME);
             const logSheet = spreadsheet.getSheetByName(LOG_SHEET_NAME);
@@ -78,7 +88,7 @@ function doGet(e) {
             responseData.error = `Unknown action: ${action}`;
         }
     
-        console.log('✅ GETレスポンス送信:', responseData.status);
+        console.log('✅ GETレスポンス送信:', responseData.status || action);
         return createResponse(responseData);
     
     } catch (error) {
@@ -92,13 +102,42 @@ function doGet(e) {
 }
 
 /**
- * POSTリクエスト処理（面接データ受信用）
+ * POSTリクエスト処理（面接データ受信用＋管理画面API）
  */
 function doPost(e) {
     try {
         console.log('📨 POSTリクエスト受信開始');
     
-        // スプレッドシートとシートの確認
+        // POSTデータの解析
+        let postData;
+        try {
+            if (e && e.postData && e.postData.contents) {
+                postData = JSON.parse(e.postData.contents);
+            } else if (e && e.parameter && e.parameter.data) {
+                postData = JSON.parse(e.parameter.data);
+            } else {
+                postData = { test: true };
+            }
+        } catch (parseError) {
+            console.error('❌ データ解析エラー:', parseError);
+            return createResponse({
+                success: false,
+                error: 'データ形式が正しくありません',
+                statusCode: 400
+            });
+        }
+        
+        // 管理画面用API
+        const action = postData.action || '';
+        if (action === 'updateApplicantStatus') {
+            return updateApplicantStatusApi(postData);
+        } else if (action === 'scheduleInterview') {
+            return scheduleInterviewApi(postData);
+        } else if (action === 'sendNotification') {
+            return sendNotificationApi(postData);
+        }
+        
+        // 既存の面接データ登録処理
         const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
         let mainSheet = spreadsheet.getSheetByName(SHEET_NAME);
     
@@ -108,38 +147,8 @@ function doPost(e) {
             setupMainSheetHeaders(mainSheet);
         }
     
-        // POSTデータの解析
-        let interviewData;
-        try {
-            if (e && e.postData && e.postData.contents) {
-                interviewData = JSON.parse(e.postData.contents);
-            } else if (e && e.parameter && e.parameter.data) {
-                interviewData = JSON.parse(e.parameter.data);
-            } else {
-                // テスト用データ
-                interviewData = {
-                    applicantName: 'ALSOK接続テスト',
-                    phoneNumber: '03-0000-0000',
-                    test: true
-                };
-            }
-      
-            console.log('📋 データ解析完了:', {
-                applicantName: interviewData.applicantName,
-                isTest: !!interviewData.test
-            });
-
-        } catch (parseError) {
-            console.error('❌ データ解析エラー:', parseError);
-            return createResponse({
-                success: false,
-                error: '面接データの形式が正しくありません',
-                statusCode: 400
-            });
-        }
-    
         // テスト接続の場合
-        if (interviewData.test) {
+        if (postData.test) {
             console.log('🧪 接続テスト実行');
             logActivity('接続テスト', 'INFO', 'Cloudflare Functionsからの接続確認');
             return createResponse({
@@ -151,7 +160,7 @@ function doPost(e) {
         }
     
         // 必須データ検証
-        if (!interviewData.applicantName || !interviewData.phoneNumber) {
+        if (!postData.applicantName || !postData.phoneNumber) {
             console.log('⚠️ 必須データ不足');
             return createResponse({
                 success: false,
@@ -161,13 +170,13 @@ function doPost(e) {
         }
     
         // データ追加処理
-        const rowNumber = addInterviewData(interviewData);
+        const rowNumber = addInterviewData(postData);
     
         // 成功ログ
         logActivity('面接データ登録成功', 'SUCCESS', 
-            `行番号: ${rowNumber}, 応募者: ${interviewData.applicantName}`,
-            interviewData.ipAddress || '',
-            interviewData.sessionId || ''
+            `行番号: ${rowNumber}, 応募者: ${postData.applicantName}`,
+            postData.ipAddress || '',
+            postData.sessionId || ''
         );
     
         console.log('✅ データ登録完了:', rowNumber);
@@ -175,8 +184,8 @@ function doPost(e) {
             success: true,
             message: '面接データが正常に登録されました',
             rowNumber: rowNumber,
-            applicantName: interviewData.applicantName,
-            qualificationStatus: determineQualificationStatus(interviewData),
+            applicantName: postData.applicantName,
+            qualificationStatus: determineQualificationStatus(postData),
             timestamp: formatDateTime(new Date()),
             spreadsheetUrl: spreadsheet.getUrl()
         });
@@ -445,7 +454,11 @@ function addInterviewData(data) {
         data.screenResolution || '', // Y: 画面解像度
         data.language || 'ja', // Z: 言語設定
         data.timezone || 'Asia/Tokyo', // AA: タイムゾーン
-        `AI面接完了 - ${qualificationStatus}` // AB: 備考
+        'screening_completed', // AB: ステータス（初期値）
+        '', // AC: 審査メモ
+        '', // AD: 更新日時
+        '', // AE: 面接日時
+        ''  // AF: カレンダーイベントID
     ];
   
     const newRowNumber = sheet.getLastRow() + 1;
@@ -616,4 +629,298 @@ function showApplicationStatus() {
     } catch (error) {
         SpreadsheetApp.getUi().alert('❌ 状況確認エラー:\n' + error.toString());
     }
+}
+
+// ========================================
+// 管理画面API関数群
+// ========================================
+
+/**
+ * 応募者一覧取得API
+ */
+function getApplicantsApi(e) {
+    try {
+        const params = e.parameter || {};
+        const startDate = params.startDate || '';
+        const endDate = params.endDate || '';
+        const status = params.status || 'all';
+        const qualificationStatus = params.qualificationStatus || 'all';
+        const searchQuery = params.searchQuery || '';
+        const page = parseInt(params.page || '1');
+        const pageSize = parseInt(params.pageSize || '50');
+        
+        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+        const sheet = spreadsheet.getSheetByName(SHEET_NAME);
+        
+        if (!sheet) {
+            return createResponse({
+                success: false,
+                error: 'データシートが見つかりません',
+                applicants: []
+            });
+        }
+        
+        const lastRow = sheet.getLastRow();
+        if (lastRow <= 1) {
+            return createResponse({
+                success: true,
+                applicants: [],
+                total: 0,
+                page: page,
+                pageSize: pageSize
+            });
+        }
+        
+        // 全データ取得
+        const dataRange = sheet.getRange(2, 1, lastRow - 1, 28); // AB列まで
+        const data = dataRange.getValues();
+        
+        // データを構造化
+        let applicants = data.map((row, index) => {
+            return {
+                id: String(index + 2), // 行番号をIDとして使用
+                timestamp: row[0] ? formatDateTime(row[0]) : '',
+                applicantName: row[1] || '',
+                phoneNumber: row[2] || '',
+                applicationSource: row[3] || '',
+                step1_answer: row[4] || '',
+                step2_answer: row[5] || '',
+                step3_answer: row[6] || '',
+                step4_answer: row[7] || '',
+                step5_answer: row[8] || '',
+                step6_answer: row[9] || '',
+                step7_answer: row[10] || '',
+                step8_answer: row[11] || '',
+                step9_answer: row[12] || '',
+                step10_answer: row[13] || '',
+                step11_answer: row[14] || '',
+                step12_answer: row[15] || '',
+                qualificationStatus: row[16] || '',
+                overallResult: row[17] || '',
+                completionTime: row[18] ? formatDateTime(row[18]) : '',
+                deviceType: row[19] || '',
+                ipAddress: row[20] || '',
+                userAgent: row[21] || '',
+                sessionId: row[22] || '',
+                status: row[27] || 'screening_completed', // AB列: ステータス
+                reviewNotes: '', // 今後追加
+                interviewDate: '', // 今後追加
+                interviewTime: '' // 今後追加
+            };
+        });
+        
+        // フィルタリング
+        if (startDate) {
+            applicants = applicants.filter(a => a.timestamp >= startDate);
+        }
+        if (endDate) {
+            applicants = applicants.filter(a => a.timestamp <= endDate);
+        }
+        if (status !== 'all') {
+            applicants = applicants.filter(a => a.status === status);
+        }
+        if (qualificationStatus !== 'all') {
+            applicants = applicants.filter(a => a.qualificationStatus === qualificationStatus);
+        }
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            applicants = applicants.filter(a => 
+                a.applicantName.toLowerCase().includes(query) ||
+                a.phoneNumber.includes(query)
+            );
+        }
+        
+        // ソート（新しい順）
+        applicants.sort((a, b) => {
+            return new Date(b.timestamp) - new Date(a.timestamp);
+        });
+        
+        // ページネーション
+        const total = applicants.length;
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedApplicants = applicants.slice(startIndex, endIndex);
+        
+        logActivity('応募者一覧取得', 'INFO', `取得件数: ${paginatedApplicants.length}/${total}`);
+        
+        return createResponse({
+            success: true,
+            applicants: paginatedApplicants,
+            total: total,
+            page: page,
+            pageSize: pageSize,
+            totalPages: Math.ceil(total / pageSize)
+        });
+        
+    } catch (error) {
+        console.error('❌ 応募者一覧取得エラー:', error);
+        return createResponse({
+            success: false,
+            error: error.toString(),
+            applicants: []
+        });
+    }
+}
+
+/**
+ * 応募者詳細取得API
+ */
+function getApplicantDetailApi(e) {
+    try {
+        const params = e.parameter || {};
+        const id = params.id || '';
+        
+        if (!id) {
+            return createResponse({
+                success: false,
+                error: 'IDが指定されていません'
+            });
+        }
+        
+        const rowNumber = parseInt(id);
+        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+        const sheet = spreadsheet.getSheetByName(SHEET_NAME);
+        
+        if (!sheet || rowNumber < 2 || rowNumber > sheet.getLastRow()) {
+            return createResponse({
+                success: false,
+                error: '応募者データが見つかりません'
+            });
+        }
+        
+        const row = sheet.getRange(rowNumber, 1, 1, 28).getValues()[0];
+        
+        const applicant = {
+            id: String(rowNumber),
+            timestamp: row[0] ? formatDateTime(row[0]) : '',
+            applicantName: row[1] || '',
+            phoneNumber: row[2] || '',
+            applicationSource: row[3] || '',
+            step1_answer: row[4] || '',
+            step2_answer: row[5] || '',
+            step3_answer: row[6] || '',
+            step4_answer: row[7] || '',
+            step5_answer: row[8] || '',
+            step6_answer: row[9] || '',
+            step7_answer: row[10] || '',
+            step8_answer: row[11] || '',
+            step9_answer: row[12] || '',
+            step10_answer: row[13] || '',
+            step11_answer: row[14] || '',
+            step12_answer: row[15] || '',
+            qualificationStatus: row[16] || '',
+            overallResult: row[17] || '',
+            completionTime: row[18] ? formatDateTime(row[18]) : '',
+            deviceType: row[19] || '',
+            ipAddress: row[20] || '',
+            userAgent: row[21] || '',
+            sessionId: row[22] || '',
+            status: row[27] || 'screening_completed'
+        };
+        
+        logActivity('応募者詳細取得', 'INFO', `ID: ${id}, 応募者: ${applicant.applicantName}`);
+        
+        return createResponse({
+            success: true,
+            applicant: applicant
+        });
+        
+    } catch (error) {
+        console.error('❌ 応募者詳細取得エラー:', error);
+        return createResponse({
+            success: false,
+            error: error.toString()
+        });
+    }
+}
+
+/**
+ * 応募者ステータス更新API
+ */
+function updateApplicantStatusApi(data) {
+    try {
+        const id = data.id || '';
+        const newStatus = data.status || '';
+        const notes = data.notes || '';
+        
+        if (!id || !newStatus) {
+            return createResponse({
+                success: false,
+                error: 'IDとステータスは必須です'
+            });
+        }
+        
+        const rowNumber = parseInt(id);
+        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+        const sheet = spreadsheet.getSheetByName(SHEET_NAME);
+        
+        if (!sheet || rowNumber < 2 || rowNumber > sheet.getLastRow()) {
+            return createResponse({
+                success: false,
+                error: '応募者データが見つかりません'
+            });
+        }
+        
+        // AB列(28列目)にステータス更新
+        sheet.getRange(rowNumber, 28).setValue(newStatus);
+        
+        // AC列に審査メモ（必要に応じて追加）
+        if (notes) {
+            sheet.getRange(rowNumber, 29).setValue(notes);
+        }
+        
+        // 更新日時をAD列に記録
+        sheet.getRange(rowNumber, 30).setValue(formatDateTime(new Date()));
+        
+        const applicantName = sheet.getRange(rowNumber, 2).getValue();
+        
+        logActivity('ステータス更新', 'SUCCESS', 
+            `ID: ${id}, 応募者: ${applicantName}, 新ステータス: ${newStatus}`);
+        
+        return createResponse({
+            success: true,
+            message: 'ステータスを更新しました',
+            id: id,
+            status: newStatus
+        });
+        
+    } catch (error) {
+        console.error('❌ ステータス更新エラー:', error);
+        return createResponse({
+            success: false,
+            error: error.toString()
+        });
+    }
+}
+
+/**
+ * カレンダー空き枠取得API（未実装・次タスクで実装）
+ */
+function getAvailableSlotsApi(e) {
+    return createResponse({
+        success: true,
+        message: 'カレンダーAPI未実装',
+        slots: []
+    });
+}
+
+/**
+ * 面接予約登録API（未実装・次タスクで実装）
+ */
+function scheduleInterviewApi(data) {
+    return createResponse({
+        success: true,
+        message: '面接予約API未実装',
+        eventId: ''
+    });
+}
+
+/**
+ * 通知送信API（未実装・次タスクで実装）
+ */
+function sendNotificationApi(data) {
+    return createResponse({
+        success: true,
+        message: '通知送信API未実装'
+    });
 }
