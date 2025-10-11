@@ -124,21 +124,6 @@
                     </p>
                 </div>
                 
-                <!-- 応募動機（オプション） -->
-                <div>
-                    <label for="motivation" class="block text-sm font-semibold text-gray-700 mb-2">
-                        志望動機（簡潔に）
-                        <span class="text-gray-400 text-xs font-normal">任意</span>
-                    </label>
-                    <textarea 
-                        id="motivation" 
-                        name="motivation"
-                        class="input-field w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none resize-none"
-                        rows="3"
-                        placeholder="ALSOKで働きたい理由をお聞かせください（任意）"
-                    ></textarea>
-                </div>
-                
                 <!-- プライバシー同意 -->
                 <div class="bg-gray-50 rounded-xl p-4">
                     <label class="flex items-start space-x-3 cursor-pointer">
@@ -283,8 +268,7 @@
             const formData = new FormData(form);
             const applicantInfo = {
                 name: formData.get('name').trim(),
-                phone: formData.get('phone').trim(),
-                motivation: formData.get('motivation').trim() || ''
+                phone: formData.get('phone').trim()
             };
             
             // ローディング状態

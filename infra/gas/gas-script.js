@@ -7,13 +7,13 @@ const LOG_SHEET_NAME = 'システムログ';
 
 const COLUMN_MAPPING = {
     A: '応募日時', B: '応募者名', C: '電話番号', D: '応募経路',
-    E: 'Q1_応募経路詳細', F: 'Q2_欠格事由確認', G: 'Q3_勤務期間希望', H: 'Q4_体力面・業務対応',
-    I: 'Q5_意気込み・アピール', J: 'Q6_仕事内容理解度', K: 'Q7_責任の重さ認識',
-    L: 'Q8_研修・資格意欲', M: 'Q9_重視する点', N: 'Q10_他社検討状況', O: 'Q11_面接準備・質問',
-    P: '適格性判定', Q: '総合結果', R: '完了時間', S: 'デバイス種別',
-    T: 'IPアドレス', U: 'ユーザーエージェント', V: 'セッションID',
-    W: 'リファラー', X: '画面解像度', Y: '言語設定', Z: 'タイムゾーン',
-    AA: '備考'
+    E: 'Q1_応募経路詳細', F: 'Q2_欠格事由確認', G: 'Q3_勤務期間希望', H: 'Q4_志望動機・応募理由',
+    I: 'Q5_体力面・業務対応', J: 'Q6_意気込み・アピール', K: 'Q7_仕事内容理解度', L: 'Q8_責任の重さ認識',
+    M: 'Q9_研修・資格意欲', N: 'Q10_重視する点', O: 'Q11_他社検討状況', P: 'Q12_面接準備・質問',
+    Q: '適格性判定', R: '総合結果', S: '完了時間', T: 'デバイス種別',
+    U: 'IPアドレス', V: 'ユーザーエージェント', W: 'セッションID',
+    X: 'リファラー', Y: '画面解像度', Z: '言語設定', AA: 'タイムゾーン',
+    AB: '備考'
 };
 
 /**
@@ -331,7 +331,7 @@ function addInterviewData(data) {
             return null;
         }
         // If step answers are missing, try to map from arrays like interview_responses or responses
-        const maxSteps = 11;
+        const maxSteps = 12;
         // Helper to set step if empty
         function setStepIfEmpty(stepIdx, value) {
             const key = `step${stepIdx}_answer`;
@@ -425,26 +425,27 @@ function addInterviewData(data) {
         data.step1_answer || '', // E: Q1_応募経路詳細
         data.step2_answer || '', // F: Q2_欠格事由確認
         data.step3_answer || '', // G: Q3_勤務期間希望
-        data.step4_answer || '', // H: Q4_体力面・業務対応
-        data.step5_answer || '', // I: Q5_意気込み・アピール
-        data.step6_answer || '', // J: Q6_仕事内容理解度
-        data.step7_answer || '', // K: Q7_責任の重さ認識
-        data.step8_answer || '', // L: Q8_研修・資格意欲
-        data.step9_answer || '', // M: Q9_重視する点
-        data.step10_answer || '', // N: Q10_他社検討状況
-        data.step11_answer || '', // O: Q11_面接準備・質問
-        qualificationStatus, // P: 適格性判定
-        determineOverallResult(qualificationStatus), // Q: 総合結果
-        data.completionTime || formatDateTime(now), // R: 完了時間
-        getDeviceType(data.userAgent), // S: デバイス種別
-        data.ipAddress || '', // T: IPアドレス
-        (data.userAgent || '').substring(0, 200), // U: ユーザーエージェント
-        data.sessionId || '', // V: セッションID
-        data.referrer || '', // W: リファラー
-        data.screenResolution || '', // X: 画面解像度
-        data.language || 'ja', // Y: 言語設定
-        data.timezone || 'Asia/Tokyo', // Z: タイムゾーン
-        `AI面接完了 - ${qualificationStatus}` // AA: 備考
+        data.step4_answer || '', // H: Q4_志望動機・応募理由
+        data.step5_answer || '', // I: Q5_体力面・業務対応
+        data.step6_answer || '', // J: Q6_意気込み・アピール
+        data.step7_answer || '', // K: Q7_仕事内容理解度
+        data.step8_answer || '', // L: Q8_責任の重さ認識
+        data.step9_answer || '', // M: Q9_研修・資格意欲
+        data.step10_answer || '', // N: Q10_重視する点
+        data.step11_answer || '', // O: Q11_他社検討状況
+        data.step12_answer || '', // P: Q12_面接準備・質問
+        qualificationStatus, // Q: 適格性判定
+        determineOverallResult(qualificationStatus), // R: 総合結果
+        data.completionTime || formatDateTime(now), // S: 完了時間
+        getDeviceType(data.userAgent), // T: デバイス種別
+        data.ipAddress || '', // U: IPアドレス
+        (data.userAgent || '').substring(0, 200), // V: ユーザーエージェント
+        data.sessionId || '', // W: セッションID
+        data.referrer || '', // X: リファラー
+        data.screenResolution || '', // Y: 画面解像度
+        data.language || 'ja', // Z: 言語設定
+        data.timezone || 'Asia/Tokyo', // AA: タイムゾーン
+        `AI面接完了 - ${qualificationStatus}` // AB: 備考
     ];
   
     const newRowNumber = sheet.getLastRow() + 1;
@@ -472,14 +473,21 @@ function determineQualificationStatus(data) {
         if (answer.includes('3ヶ月') && !answer.includes('以上')) return '継続性要検討';
     }
     
-    // Q4: 体力面対応（業務適合性）
+    // Q4: 志望動機・応募理由（動機評価）
     if (data.step4_answer) {
         const answer = String(data.step4_answer).toLowerCase();
+        if (answer.length < 20) return '志望動機要補強';
+        if (answer.includes('お金') && !answer.includes('やりがい') && !answer.includes('責任')) return '動機内容要検討';
+    }
+    
+    // Q5: 体力面対応（業務適合性）
+    if (data.step5_answer) {
+        const answer = String(data.step5_answer).toLowerCase();
         if (answer.includes('一部対応困難') || answer.includes('困難')) return '業務適合性要検討';
     }
     
-    // 記述式質問の内容評価（Q5, Q7, Q11）
-    const textAnswers = [data.step5_answer, data.step7_answer, data.step11_answer];
+    // 記述式質問の内容評価（Q4, Q6, Q8, Q12）
+    const textAnswers = [data.step4_answer, data.step6_answer, data.step8_answer, data.step12_answer];
     const emptyAnswers = textAnswers.filter(answer => !answer || String(answer).trim().length < 10);
     if (emptyAnswers.length >= 2) return '回答内容要検討';
     
@@ -550,17 +558,18 @@ function addTestData() {
         const testData = {
             applicantName: 'ALSOK太郎',
             phoneNumber: '03-1234-5678',
-            step1_answer: '18歳以上です',
-            step2_answer: '日本国籍です',
-            step3_answer: 'ありません',
-            step4_answer: 'ありません',
-            step5_answer: 'ありません',
-            step6_answer: 'ありません',
-            step7_answer: 'ありません',
-            step8_answer: '東京都内在住',
-            step9_answer: '提供した番号で連絡可能',
-            step10_answer: 'はい、希望します',
-            step11_answer: '警備業務に興味があります',
+            step1_answer: 'Indeed（インディード）',
+            step2_answer: '上記のいずれにも該当しない',
+            step3_answer: '1年以上の長期勤務を希望',
+            step4_answer: '人の安全を守る仕事に使命感を感じ、ALSOKの信頼性と実績に魅力を感じたため',
+            step5_answer: '上記すべて対応可能',
+            step6_answer: '責任感を持って地域の安全に貢献したい',
+            step7_answer: 'よく知っている',
+            step8_answer: '重大な責任だと理解しており、しっかりと取り組みたい',
+            step9_answer: '積極的に取り組みたい',
+            step10_answer: '仕事のやりがい',
+            step11_answer: '弊社のみに応募',
+            step12_answer: '警備業法について勉強したい',
             ipAddress: '203.0.113.100',
             sessionId: 'alsok_test_' + Date.now()
         };

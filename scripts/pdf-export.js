@@ -159,7 +159,7 @@ class AlsokPDFExporter {
     }
 
     /**
-     * 事前確認回答の処理（新11ステップ対応版）
+     * 事前確認回答の処理（新12ステップ対応版）
      */
     processScreeningResponses(responses) {
         const processedResponses = [];
@@ -186,7 +186,11 @@ class AlsokPDFExporter {
                     answer = this.durationMapping[response.answer] || response.answer;
                     break;
                     
-                case 4: // Q4: 体力面・業務対応
+                case 4: // Q4: 志望動機・応募理由（テキスト）
+                    answer = response.answer || '';
+                    break;
+                    
+                case 5: // Q5: 体力面・業務対応
                     if (Array.isArray(response.answer)) {
                         answer = response.answer
                             .map(id => this.physicalCapabilityMapping[id] || id)
@@ -196,31 +200,31 @@ class AlsokPDFExporter {
                     }
                     break;
                     
-                case 5: // Q5: 意気込み・アピール（テキスト）
+                case 6: // Q6: 意気込み・アピール（テキスト）
                     answer = response.answer || '';
                     break;
                     
-                case 6: // Q6: 仕事内容理解度
+                case 7: // Q7: 仕事内容理解度
                     answer = this.knowledgeMapping[response.answer] || response.answer;
                     break;
                     
-                case 7: // Q7: 責任の重さ認識（テキスト）
+                case 8: // Q8: 責任の重さ認識（テキスト）
                     answer = response.answer || '';
                     break;
                     
-                case 8: // Q8: 研修・資格意欲
+                case 9: // Q9: 研修・資格意欲
                     answer = this.trainingMapping[response.answer] || response.answer;
                     break;
                     
-                case 9: // Q9: 重視する点
+                case 10: // Q10: 重視する点
                     answer = this.priorityMapping[response.answer] || response.answer;
                     break;
                     
-                case 10: // Q10: 他社検討状況
+                case 11: // Q11: 他社検討状況
                     answer = this.competitorMapping[response.answer] || response.answer;
                     break;
                     
-                case 11: // Q11: 面接準備・質問（テキスト）
+                case 12: // Q12: 面接準備・質問（テキスト）
                     answer = response.answer || '';
                     break;
             }

@@ -276,14 +276,6 @@
                     📞 お問い合わせ先
                 </button>
                 
-                <!-- CSV出力機能 -->
-                <button 
-                    id="export-csv"
-                    class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-medium transition-colors"
-                >
-                    📊 CSVでダウンロード
-                </button>
-                
                 <!-- PDF出力機能 -->
                 <button 
                     id="export-pdf"
@@ -358,8 +350,7 @@
 
     <!-- 共有ストレージライブラリ -->
     <script src="/shared-storage.js"></script>
-    <!-- CSV出力ライブラリ -->
-    <script src="/scripts/csv-export.js"></script>
+
     <!-- PDF出力ライブラリ -->
     <script src="/scripts/pdf-export.js"></script>
     <!-- Google Sheets API統合 -->
@@ -458,8 +449,7 @@
             // お問い合わせ
             document.getElementById('contact-info').addEventListener('click', showContactModal);
             
-            // CSV出力
-            document.getElementById('export-csv').addEventListener('click', exportCSV);
+
             
             // PDF出力
             document.getElementById('export-pdf').addEventListener('click', exportPDF);
@@ -519,25 +509,6 @@
             document.getElementById('contact-modal').classList.add('hidden');
         }
         
-        // CSV出力
-        function exportCSV() {
-            if (window.alsokCSVExporter && applicantId) {
-                try {
-                    // 単一応募者のデータをCSV出力
-                    const success = window.alsokCSVExporter.exportSingleApplicant(applicantId);
-                    if (success) {
-                        // 出力成功のメッセージを表示
-                        showExportSuccessMessage('csv');
-                    }
-                } catch (error) {
-                    console.error('CSV出力エラー:', error);
-                    alert('データの出力中にエラーが発生しました。\nしばらく経ってから再度お試しください。');
-                }
-            } else {
-                alert('出力機能の読み込みに問題があります。\nページを再読み込みしてください。');
-            }
-        }
-        
         // PDF出力
         async function exportPDF() {
             if (window.alsokPDFExporter && applicantId) {
@@ -570,10 +541,9 @@
         }
         
         // 出力成功メッセージ表示
-        function showExportSuccessMessage(type = 'csv') {
+        function showExportSuccessMessage(type = 'pdf') {
             // 一時的な成功メッセージを表示
-            const buttonId = type === 'pdf' ? 'export-pdf' : 'export-csv';
-            const button = document.getElementById(buttonId);
+            const button = document.getElementById('export-pdf');
             const originalText = button.textContent;
             button.textContent = '✅ ダウンロード完了！';
             button.style.backgroundColor = '#10b981';
