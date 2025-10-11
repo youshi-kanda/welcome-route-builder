@@ -790,9 +790,20 @@
             // Ensure applicantData includes the latest responses from storage
             try {
                 const latestApplicant = window.alsokStorage.getApplicant(applicantId);
-                if (latestApplicant && latestApplicant.responses) {
-                    applicantData.responses = latestApplicant.responses;
-                    console.log('📋 応募者回答を取得:', applicantData.responses.length, '件');
+                if (latestApplicant) {
+                    // Use interview responses if available, otherwise use screening responses
+                    if (latestApplicant.responses && latestApplicant.responses.length > 0) {
+                        applicantData.responses = latestApplicant.responses;
+                        console.log('📋 面接回答を取得:', applicantData.responses.length, '件');
+                    } else if (latestApplicant.screeningResponses && latestApplicant.screeningResponses.length > 0) {
+                        // Convert screening responses to standard responses format
+                        applicantData.responses = latestApplicant.screeningResponses.map(sr => ({
+                            questionNumber: sr.step,
+                            question: sr.question,
+                            answer: sr.answer
+                        }));
+                        console.log('📋 事前精査回答を取得:', applicantData.responses.length, '件');
+                    }
                 }
             } catch (e) {
                 console.warn('⚠️ 応募者データ取得エラー:', e);
