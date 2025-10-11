@@ -1,0 +1,17 @@
+# Cloudflare Pages Configuration
+# ALSOK Admin Dashboard
+
+name = "alsok-admin-dashboard"
+compatibility_date = "2023-12-01"
+
+[env.production]
+# Cloudflare Pages環境変数（ダッシュボードで設定）
+# GAS_API_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"
+# TWILIO_ACCOUNT_SID = "ACxxxx"
+# TWILIO_AUTH_TOKEN = "xxxx"
+# TWILIO_PHONE_NUMBER = "+1234567890"
+
+# Build Configuration
+# Build command: npm run build
+# Build output directory: dist
+# Root directory: admin
