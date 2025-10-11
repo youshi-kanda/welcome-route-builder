@@ -281,7 +281,15 @@
                     id="export-csv"
                     class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-medium transition-colors"
                 >
-                    📊 事前確認データをダウンロード
+                    📊 CSVでダウンロード
+                </button>
+                
+                <!-- PDF出力機能 -->
+                <button 
+                    id="export-pdf"
+                    class="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-xl font-medium transition-colors"
+                >
+                    📄 PDFでダウンロード
                 </button>
                 
                 <!-- デモ体験用（デモ時のみ表示） -->
@@ -352,6 +360,8 @@
     <script src="/shared-storage.js"></script>
     <!-- CSV出力ライブラリ -->
     <script src="/scripts/csv-export.js"></script>
+    <!-- PDF出力ライブラリ -->
+    <script src="/scripts/pdf-export.js"></script>
     <!-- Google Sheets API統合 -->
     <script src="/infra/gas/google-sheets-config.js"></script>
     <script src="/infra/gas/google-sheets-api.js"></script>
@@ -451,6 +461,9 @@
             // CSV出力
             document.getElementById('export-csv').addEventListener('click', exportCSV);
             
+            // PDF出力
+            document.getElementById('export-pdf').addEventListener('click', exportPDF);
+            
             // デモ再開
             document.getElementById('demo-restart').addEventListener('click', restartDemo);
             
@@ -514,7 +527,7 @@
                     const success = window.alsokCSVExporter.exportSingleApplicant(applicantId);
                     if (success) {
                         // 出力成功のメッセージを表示
-                        showExportSuccessMessage();
+                        showExportSuccessMessage('csv');
                     }
                 } catch (error) {
                     console.error('CSV出力エラー:', error);
@@ -525,10 +538,42 @@
             }
         }
         
+        // PDF出力
+        async function exportPDF() {
+            if (window.alsokPDFExporter && applicantId) {
+                try {
+                    // ボタンを一時的に無効化
+                    const button = document.getElementById('export-pdf');
+                    const originalText = button.textContent;
+                    button.textContent = '⏳ PDF生成中...';
+                    button.disabled = true;
+                    
+                    // 単一応募者のデータをPDF出力
+                    const success = await window.alsokPDFExporter.exportSingleApplicant(applicantId);
+                    if (success) {
+                        // 出力成功のメッセージを表示
+                        showExportSuccessMessage('pdf');
+                    } else {
+                        button.textContent = originalText;
+                        button.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('PDF出力エラー:', error);
+                    alert('PDFの生成中にエラーが発生しました。\nしばらく経ってから再度お試しください。');
+                    const button = document.getElementById('export-pdf');
+                    button.textContent = '📄 PDFでダウンロード';
+                    button.disabled = false;
+                }
+            } else {
+                alert('PDF出力機能の読み込みに問題があります。\nページを再読み込みしてください。');
+            }
+        }
+        
         // 出力成功メッセージ表示
-        function showExportSuccessMessage() {
+        function showExportSuccessMessage(type = 'csv') {
             // 一時的な成功メッセージを表示
-            const button = document.getElementById('export-csv');
+            const buttonId = type === 'pdf' ? 'export-pdf' : 'export-csv';
+            const button = document.getElementById(buttonId);
             const originalText = button.textContent;
             button.textContent = '✅ ダウンロード完了！';
             button.style.backgroundColor = '#10b981';

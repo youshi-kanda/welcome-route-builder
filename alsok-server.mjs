@@ -64,6 +64,9 @@ const server = createServer(async (req, res) => {
     } else if (pathname === '/csv-export.js') {
       // CSV出力ライブラリ -> scripts/
       filePath = join(__dirname, 'scripts', 'csv-export.js');
+    } else if (pathname.startsWith('/scripts/')) {
+      // スクリプトフォルダ内のファイル (csv-export.js, pdf-export.js, etc.)
+      filePath = join(__dirname, pathname);
     } else if (pathname === '/sample-data-generator.js') {
       // サンプルデータ生成ライブラリ -> scripts/
       filePath = join(__dirname, 'scripts', 'sample-data-generator.js');
